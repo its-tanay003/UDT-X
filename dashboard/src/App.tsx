@@ -47,10 +47,10 @@ const ConsoleRail: React.FC = () => {
   ];
 
   return (
-    <aside className="w-64 bg-[#0B1220] border-r border-[#3FC7D4]/15 flex flex-col justify-between shrink-0 p-4 select-none">
+    <aside id="tour-rail" className="w-64 bg-[#0B1220] border-r border-[#3FC7D4]/15 flex flex-col justify-between shrink-0 p-4 select-none">
       <div className="space-y-5">
         {/* Enclave Brand & Header */}
-        <div className="flex items-center gap-3 px-2 py-1">
+        <div id="tour-rail-brand" className="flex items-center gap-3 px-2 py-1">
           <div className="w-8 h-8 rounded-lg bg-[#3FC7D4]/15 border border-[#3FC7D4]/40 flex items-center justify-center">
             <Shield className="w-4 h-4 text-[#3FC7D4]" />
           </div>
@@ -65,7 +65,7 @@ const ConsoleRail: React.FC = () => {
         </div>
 
         {/* Data Diode Status Box */}
-        <div className="p-3 rounded-lg bg-[#131B2E] border border-[#3FC7D4]/20 space-y-2">
+        <div id="tour-diode-box" className="p-3 rounded-lg bg-[#131B2E] border border-[#3FC7D4]/20 space-y-2">
           <div className="flex items-center justify-between text-[11px] font-mono">
             <span className="text-[#8A95AA]">DATA DIODE:</span>
             <span
@@ -99,7 +99,7 @@ const ConsoleRail: React.FC = () => {
         </div>
 
         {/* Navigation Rail Links */}
-        <nav className="space-y-1">
+        <nav id="tour-nav-links" className="space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon;
             return (
@@ -107,6 +107,7 @@ const ConsoleRail: React.FC = () => {
                 key={item.to}
                 to={item.to}
                 end={item.to === "/"}
+                id={`tour-nav-${item.label.toLowerCase().replace(/[\s-]+/g, "_")}`}
                 className={({ isActive }) =>
                   `w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-mono transition-all ${
                     isActive
@@ -124,9 +125,10 @@ const ConsoleRail: React.FC = () => {
       </div>
 
       {/* Account & Tour Utilities */}
-      <div className="pt-3 border-t border-[#3FC7D4]/10 space-y-1 font-mono text-xs">
+      <div id="tour-user-profile" className="pt-3 border-t border-[#3FC7D4]/10 space-y-1 font-mono text-xs">
         <NavLink
           to="/profile"
+          id="tour-nav-profile"
           className={({ isActive }) =>
             `w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-[11px] transition-colors ${
               isActive ? "bg-[#1B2540] text-[#3FC7D4] font-bold" : "text-[#8A95AA] hover:text-[#E7ECF5]"
@@ -139,6 +141,7 @@ const ConsoleRail: React.FC = () => {
 
         <NavLink
           to="/settings"
+          id="tour-nav-settings"
           className={({ isActive }) =>
             `w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-[11px] transition-colors ${
               isActive ? "bg-[#1B2540] text-[#3FC7D4] font-bold" : "text-[#8A95AA] hover:text-[#E7ECF5]"
@@ -151,6 +154,7 @@ const ConsoleRail: React.FC = () => {
 
         <button
           onClick={startTour}
+          id="tour-nav-briefing-btn"
           className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-[11px] text-[#3FC7D4] hover:bg-[#131B2E] transition-colors text-left"
         >
           <Compass className="w-3.5 h-3.5" />

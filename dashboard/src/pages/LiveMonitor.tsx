@@ -59,59 +59,61 @@ export const LiveMonitorPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Filter Controls Bar */}
-      <div className="p-4 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/15 flex flex-wrap items-center justify-between gap-4 font-mono text-xs">
+      {/* Filter and Search Bar */}
+      <div id="tour-live-filters" className="p-4 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/15 flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2 text-[#8A95AA]">
+          {/* Class Filter */}
+          <div className="flex items-center gap-2 font-mono text-xs text-[#8A95AA]">
             <Filter className="w-3.5 h-3.5 text-[#3FC7D4]" />
             <span>CLASS:</span>
+            <select
+              value={filterClass}
+              onChange={(e) => setFilterClass(e.target.value)}
+              className="bg-[#0B1220] border border-[#3FC7D4]/20 rounded px-2.5 py-1 text-xs text-[#E7ECF5] focus:outline-none focus:border-[#3FC7D4]"
+            >
+              <option value="ALL">ALL CLASSES</option>
+              <option value="DDOS">DDOS</option>
+              <option value="C2_BEACONING">C2 BEACONING</option>
+              <option value="RECONNAISSANCE">RECONNAISSANCE</option>
+              <option value="DGA_OR_TUNNEL">DGA / TUNNEL</option>
+              <option value="TLS_ANOMALY">TLS ANOMALY</option>
+              <option value="EXFILTRATION">EXFILTRATION</option>
+            </select>
           </div>
-          <select
-            value={filterClass}
-            onChange={(e) => setFilterClass(e.target.value)}
-            className="px-3 py-1.5 rounded-lg bg-[#0B1220] border border-[#3FC7D4]/20 text-[#E7ECF5] focus:outline-none focus:border-[#3FC7D4]"
-          >
-            <option value="ALL">ALL CLASSES</option>
-            <option value="DDOS">DDOS</option>
-            <option value="RECONNAISSANCE">RECONNAISSANCE</option>
-            <option value="C2_BEACONING">C2_BEACONING</option>
-            <option value="DGA">DGA</option>
-            <option value="DNS_TUNNELING">DNS_TUNNELING</option>
-            <option value="ENCRYPTED_ANOMALY">ENCRYPTED_ANOMALY</option>
-            <option value="EXFILTRATION">EXFILTRATION</option>
-          </select>
 
-          <div className="flex items-center gap-2 text-[#8A95AA] ml-2">
+          {/* Severity Filter */}
+          <div className="flex items-center gap-2 font-mono text-xs text-[#8A95AA]">
+            <AlertTriangle className="w-3.5 h-3.5 text-[#FF8A3D]" />
             <span>SEVERITY:</span>
+            <select
+              value={filterSeverity}
+              onChange={(e) => setFilterSeverity(e.target.value)}
+              className="bg-[#0B1220] border border-[#3FC7D4]/20 rounded px-2.5 py-1 text-xs text-[#E7ECF5] focus:outline-none focus:border-[#3FC7D4]"
+            >
+              <option value="ALL">ALL SEVERITIES</option>
+              <option value="CRITICAL">CRITICAL</option>
+              <option value="HIGH">HIGH</option>
+              <option value="MEDIUM">MEDIUM</option>
+              <option value="LOW">LOW</option>
+            </select>
           </div>
-          <select
-            value={filterSeverity}
-            onChange={(e) => setFilterSeverity(e.target.value)}
-            className="px-3 py-1.5 rounded-lg bg-[#0B1220] border border-[#3FC7D4]/20 text-[#E7ECF5] focus:outline-none focus:border-[#3FC7D4]"
-          >
-            <option value="ALL">ALL SEVERITIES</option>
-            <option value="critical">CRITICAL</option>
-            <option value="high">HIGH</option>
-            <option value="medium">MEDIUM</option>
-            <option value="low">LOW</option>
-          </select>
         </div>
 
-        {/* Search Field */}
-        <div className="relative flex-1 max-w-xs">
-          <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-[#8A95AA]" />
+        {/* Search */}
+        <div className="relative min-w-[240px]">
+          <Search className="w-3.5 h-3.5 text-[#8A95AA] absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search IP, Hash, ID..."
+            placeholder="Search IP, flow, hash..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-[#0B1220] border border-[#3FC7D4]/20 text-[#E7ECF5] placeholder-[#8A95AA]/60 focus:outline-none focus:border-[#3FC7D4]"
+            className="w-full bg-[#0B1220] border border-[#3FC7D4]/20 rounded-lg pl-9 pr-3 py-1.5 text-xs font-mono text-[#E7ECF5] placeholder-[#8A95AA] focus:outline-none focus:border-[#3FC7D4]"
           />
         </div>
       </div>
 
-      {/* Feed Table */}
-      <div className="rounded-xl bg-[#131B2E] border border-[#3FC7D4]/15 overflow-hidden">
+      {/* Stream Table */}
+      <div id="tour-live-table" className="rounded-xl bg-[#131B2E] border border-[#3FC7D4]/15 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left font-mono text-xs">
             <thead className="bg-[#0B1220] border-b border-[#3FC7D4]/15 text-[#8A95AA]">

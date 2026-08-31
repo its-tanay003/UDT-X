@@ -74,7 +74,7 @@ export const NetworkGraphPage: React.FC = () => {
       {/* Main Grid: Interactive Canvas + Node Inspector */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Left Canvas Column */}
-        <div className="lg:col-span-8 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/20 p-5 relative overflow-hidden">
+        <div id="tour-graph-canvas" className="lg:col-span-8 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/20 p-5 relative overflow-hidden">
           <div className="flex items-center justify-between mb-3 font-mono text-xs text-[#8A95AA]">
             <span>ORBIT / PAN / ZOOM ENABLED</span>
             <span className="text-[#3FC7D4]">
@@ -92,7 +92,7 @@ export const NetworkGraphPage: React.FC = () => {
               onNodeClick={handleNodeClick}
             />
           ) : (
-            <div className="h-[540px] rounded-lg bg-[#0B1220] border border-[#3FC7D4]/15 p-4 overflow-y-auto font-mono text-xs space-y-2">
+            <div className="h-135 rounded-lg bg-[#0B1220] border border-[#3FC7D4]/15 p-4 overflow-y-auto font-mono text-xs space-y-2">
               {graphData.nodes.map((node) => (
                 <div
                   key={node.id}
@@ -132,7 +132,7 @@ export const NetworkGraphPage: React.FC = () => {
         </div>
 
         {/* Right Node Inspector Column */}
-        <div className="lg:col-span-4 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/20 p-5 space-y-4 font-mono text-xs">
+        <div id="tour-graph-inspector" className="lg:col-span-4 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/20 p-5 space-y-4 font-mono text-xs">
           <h3 className="font-bold text-[#E7ECF5] uppercase tracking-wider pb-3 border-b border-[#3FC7D4]/15 flex items-center gap-2">
             <Search className="w-3.5 h-3.5 text-[#3FC7D4]" />
             Node Telemetry Inspector

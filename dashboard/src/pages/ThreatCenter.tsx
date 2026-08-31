@@ -88,7 +88,7 @@ export const ThreatCenterPage: React.FC<ThreatCenterProps> = ({
       {/* Grid: Custom D3 Sonar Sweep Chart + Detailed Breakdown Profile */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* D3 Sonar Sweep Radar (Signature Element #2) */}
-        <div className="lg:col-span-7 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/20 p-5 flex flex-col items-center justify-between">
+        <div id="tour-sonar-chart" className="lg:col-span-7 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/20 p-5 flex flex-col items-center justify-between">
           <div className="flex items-center justify-between w-full mb-2">
             <span className="text-xs font-mono font-bold text-[#E7ECF5] uppercase tracking-wider">
               D3 Sonar Sweep Radial Distribution
@@ -112,7 +112,7 @@ export const ThreatCenterPage: React.FC<ThreatCenterProps> = ({
         </div>
 
         {/* Detailed Class Drilldown Panel */}
-        <div className="lg:col-span-5 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/20 p-5 space-y-5">
+        <div id="tour-threat-profile" className="lg:col-span-5 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/20 p-5 space-y-5">
           <h3 className="text-xs font-mono font-bold text-[#8A95AA] uppercase tracking-wider">
             Threat Profile Drilldown
           </h3>

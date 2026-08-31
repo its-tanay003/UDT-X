@@ -96,7 +96,7 @@ export const EvidenceExplorerPage: React.FC = () => {
       {/* Grid: Mathematical Meters + TreeSHAP Attributions */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Left Column: Mathematical Evidence Meters */}
-        <div className="lg:col-span-6 space-y-4">
+        <div id="tour-evidence-meters" className="lg:col-span-6 space-y-4">
           <div className="p-5 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/15">
             <div className="flex items-center gap-2 mb-4 font-mono text-xs text-[#8A95AA]">
               <Binary className="w-4 h-4 text-[#3FC7D4]" />
@@ -133,7 +133,7 @@ export const EvidenceExplorerPage: React.FC = () => {
         </div>
 
         {/* Right Column: TreeSHAP Local Explainability Waterfall */}
-        <div className="lg:col-span-6 space-y-4">
+        <div id="tour-evidence-shap" className="lg:col-span-6 space-y-4">
           <div className="p-5 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/15">
             <div className="flex items-center gap-2 mb-4 font-mono text-xs text-[#8A95AA]">
               <Layers className="w-4 h-4 text-[#FF8A3D]" />

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   ArrowLeft,
@@ -88,7 +88,7 @@ export const IncidentDetailPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Left Column: Attack Timeline & Kill Chain Stages */}
         <div className="lg:col-span-7 space-y-4">
-          <div className="p-5 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/15">
+          <div id="tour-incident-timeline" className="p-5 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/15">
             <h3 className="text-xs font-mono font-bold text-[#8A95AA] uppercase tracking-wider mb-4">
               Chronological Kill-Chain Progression (30m Temporal Window)
             </h3>
@@ -97,7 +97,7 @@ export const IncidentDetailPage: React.FC = () => {
               <div className="relative pl-6 space-y-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-[#3FC7D4]/30">
                 {memberAlerts.map((alt, idx) => (
                   <div key={alt.alert_id} className="relative group">
-                    <div className="absolute -left-[22px] top-1.5 w-3.5 h-3.5 rounded-full bg-[#0B1220] border-2 border-[#3FC7D4] group-hover:border-[#FF4757] transition-colors" />
+                    <div className="absolute -left-5.5 top-1.5 w-3.5 h-3.5 rounded-full bg-[#0B1220] border-2 border-[#3FC7D4] group-hover:border-[#FF4757] transition-colors" />
 
                     <div className="p-4 rounded-lg bg-[#0B1220] border border-[#3FC7D4]/15 hover:border-[#3FC7D4]/40 transition-colors">
                       <div className="flex items-center justify-between font-mono text-xs">
@@ -153,7 +153,7 @@ export const IncidentDetailPage: React.FC = () => {
 
         {/* Right Column: Reasoning & Forensic Graph Pivot */}
         <div className="lg:col-span-5 space-y-4">
-          <div className="p-5 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/20">
+          <div id="tour-incident-reasoning" className="p-5 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/20">
             <h3 className="text-xs font-mono font-bold text-[#E7ECF5] uppercase tracking-wider mb-3">
               Correlation Graph Inference Engine
             </h3>

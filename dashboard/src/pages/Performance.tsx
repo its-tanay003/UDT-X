@@ -141,7 +141,7 @@ export const PerformancePage: React.FC<PerformancePageProps> = ({ onBack }) => {
       </div>
 
       {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <div id="tour-perf-charts" className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Latency Percentile Chart */}
         <div className="p-5 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/15">
           <div className="flex items-center justify-between mb-4">

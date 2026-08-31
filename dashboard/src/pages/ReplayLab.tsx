@@ -162,7 +162,7 @@ export const ReplayLabPage: React.FC<ReplayLabProps> = ({
       {/* Grid: 5 Physical Hardware-Style Switch Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Left: 5 Simulation Control Cards */}
-        <div className="lg:col-span-8 space-y-4">
+        <div id="tour-replay-console" className="lg:col-span-8 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-mono font-bold text-[#8A95AA] uppercase tracking-wider">
               Attack Simulation Presets (Toggle Switch + Engage)

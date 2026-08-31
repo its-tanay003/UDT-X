@@ -8,13 +8,20 @@ import {
   Target,
   Sparkles,
   Zap,
+  Layers,
+  Search,
+  Activity,
+  Flame,
+  Radio,
+  Globe,
+  Settings,
   HelpCircle,
 } from "lucide-react";
 import { useAuthStore } from "../lib/auth";
 
 export interface InteractiveTourStep {
   route: string;
-  targetId?: string;
+  targetId: string;
   locationLabel: string;
   title: string;
   summary: string;
@@ -26,18 +33,18 @@ export const INTERACTIVE_TOUR_STEPS: InteractiveTourStep[] = [
   {
     route: "/",
     targetId: "tour-rail",
-    locationLabel: "LEFT CONSOLE RAIL // SYSTEM WIDE",
+    locationLabel: "LEFT CONSOLE RAIL // PERSISTENT NAVIGATION",
     title: "1. Tactical Console Rail & Data Diode Sensor",
     summary:
-      "This is your persistent mission-control navigation hub and live hardware telemetry sensor.",
+      "Your persistent mission-control sidebar and live physical sensor state monitor.",
     whatIsHere: [
-      "Hardware Data Diode Link Indicator (ONLINE / CONNECTING / THROTTLED)",
+      "Hardware Data Diode Link Box (ONLINE / CONNECTING / THROTTLED)",
       "Instant 1-click access to all 8 operational intelligence consoles",
-      "Analyst Identity profile, Settings console, and Station Briefing triggers",
+      "Operator Profile, Settings, and manual Station Briefing re-launch trigger",
     ],
     howToUse: [
       "Check the top 'DATA DIODE' status to verify one-way RX packet flow.",
-      "Switch between consoles at any time with keyboard navigation or direct clicks.",
+      "Click any console link or use keyboard navigation to switch screens instantaneously.",
     ],
   },
   {
@@ -46,124 +53,158 @@ export const INTERACTIVE_TOUR_STEPS: InteractiveTourStep[] = [
     locationLabel: "SECURITY OVERVIEW // TOP METRIC CARDS",
     title: "2. Key Performance Indicators & Ingestion Wire Rates",
     summary:
-      "Four real-time instrumentation cards tracking flow bandwidth and escalation volumes.",
+      "Four real-time instrumentation cards tracking network flow rates and threat escalations.",
     whatIsHere: [
-      "Sustained Wire Rate (124,850 EPS benchmark rate vs 7-day Gaussian model)",
+      "Sustained Wire Rate (124,850 EPS benchmark vs 7-day Gaussian model)",
       "Active Anomalies (Sessions escalated to the 6 heuristic detection engines)",
       "Kill-Chain Incidents (Graph-correlated multi-stage APT attack chains)",
       "Scored Alerts / Min (100% mapped against MITRE ATT&CK techniques)",
     ],
     howToUse: [
       "Scan these cards first when entering the station to gauge enclave load.",
-      "Any red value indicates active hostile penetration requiring priority response.",
+      "Red or Amber values indicate active intrusions requiring priority investigation.",
     ],
   },
   {
     route: "/",
-    targetId: "tour-sphere",
+    targetId: "tour-sphere-panel",
     locationLabel: "SECURITY OVERVIEW // 3D PERIMETER",
     title: "3. 3D Ambient Listening Sphere",
     summary:
-      "A real-time WebGL visualization of the one-way inward data-diode enclave thesis.",
+      "A real-time WebGL visualization of the one-way inward data-diode enclave architecture.",
     whatIsHere: [
-      "Enclave perimeter boundary with host nodes mapped dynamically by severity",
+      "Perimeter sphere boundary with host nodes mapped dynamically by severity",
       "Bezier curve arcs connecting actual communicating endpoints",
       "One-way inward particle streams indicating strictly passive, non-intrusive ingestion",
     ],
     howToUse: [
       "Observe ambient node colors: Cyan (Nominal), Amber (High), Red (Critical).",
-      "Click 'EXPAND INTERACTIVE GRAPH' to enter 3D orbital inspection mode.",
+      "Click 'EXPAND INTERACTIVE GRAPH →' to enter the dedicated full-screen 3D inspection console.",
     ],
   },
   {
     route: "/",
-    targetId: "tour-risk-dial",
+    targetId: "tour-risk-panel",
     locationLabel: "SECURITY OVERVIEW // COMPOSITE POSTURE",
     title: "4. Composite Threat Risk Posture Ring",
     summary:
       "A dynamic 0-100 composite risk rating synthesizing anomaly confidence and asset tiering.",
     whatIsHere: [
-      "Real-time composite score calculated across sliding temporal windows",
+      "Real-time composite score calculated across 30-minute sliding temporal windows",
       "Color-coded operational threat posture (Nominal / Elevated / Critical Alert)",
     ],
     howToUse: [
-      "Monitored by commanders to declare containment and escalation states.",
-      "Scores above 75 trigger emergency analyst triage and SIEM escalation.",
+      "Used by Station Commanders to declare containment and escalation states.",
+      "Scores above 75 trigger emergency analyst triage and SIEM alert dispatch.",
+    ],
+  },
+  {
+    route: "/monitor",
+    targetId: "tour-live-filters",
+    locationLabel: "LIVE MONITOR // FILTER & SEARCH BAR",
+    title: "5. Telemetry Filter & Forensic Search Bar",
+    summary:
+      "Real-time filtering controls to isolate specific attack types and network entities.",
+    whatIsHere: [
+      "Threat Class Filter (DDoS, C2 Beaconing, Recon, DGA / Tunnel, TLS, Exfiltration)",
+      "Severity Filter (Critical, High, Medium, Low)",
+      "Sub-second Search Bar matching source IP, destination IP, flow IDs, and hashes",
+    ],
+    howToUse: [
+      "Select 'CRITICAL' in the severity dropdown to instantly filter out background noise.",
+      "Type any internal host IP into the search box to track all sessions involving that host.",
     ],
   },
   {
     route: "/monitor",
     targetId: "tour-live-table",
     locationLabel: "LIVE MONITOR // TELEMETRY FEED",
-    title: "5. Real-Time Telemetry & Alert Stream",
+    title: "6. Zero-Refresh Live Telemetry Feed",
     summary:
-      "Zero-refresh streaming table powered by live authenticated WebSockets.",
+      "Real-time streaming table powered by authenticated WebSocket telemetry directly from the data diode.",
     whatIsHere: [
-      "Filter controls by Threat Class (DDoS, C2, Recon, DGA, TLS, Exfil)",
-      "Filter controls by Severity (Critical, High, Medium, Low)",
-      "Real-time search bar for IPs, Flow IDs, and Hashes",
+      "Live stream of classified alerts with MITRE ATT&CK tactic tags",
+      "Source/Destination host IPs, protocol, byte volumes, and composite risk score",
+      "One-click 'EVIDENCE →' inspection link for every alert",
     ],
     howToUse: [
-      "Filter by 'CRITICAL' to immediately isolate dangerous attacks.",
-      "Click 'EVIDENCE →' on any row to open the Explainable AI evidence explorer.",
+      "Observe incoming flows as they stream without page reloads.",
+      "Click 'EVIDENCE →' on any row to open the Explainable AI evidence explorer for that alert.",
     ],
   },
   {
     route: "/incidents/INC-2026-0831-01",
     targetId: "tour-incident-timeline",
     locationLabel: "INCIDENT DOSSIER // TEMPORAL GRAPH",
-    title: "6. Incident Dossier & Kill-Chain Progression",
+    title: "7. Incident Dossier & Kill-Chain Progression",
     summary:
       "Chronological multi-stage attack chains synthesized across 30-minute rolling graph windows.",
     whatIsHere: [
-      "Multi-stage progression timeline (e.g. Recon → C2 Beaconing → Exfiltration)",
-      "MITRE ATT&CK technique tags and composite incident severity",
-      "Graph Correlation Reasoning explaining why disparate alerts were unified",
+      "Multi-stage timeline (e.g. Reconnaissance → C2 Beaconing → Exfiltration Spike)",
+      "Exact timestamps, communicating IPs, and MITRE technique tags for each stage",
+      "Correlation Inference Engine reasoning explaining why disparate alerts were unified",
     ],
     howToUse: [
-      "Follow the numbered stages from top to bottom to trace the attacker's path.",
-      "Click 'VIEW INCIDENT IN NEO4J GRAPH CANVAS' to inspect connected graph entities.",
+      "Follow the numbered stages from top to bottom to trace the attacker's progression.",
+      "Click 'VIEW INCIDENT IN NEO4J GRAPH CANVAS' to pivot into the interactive 3D topology.",
     ],
   },
   {
     route: "/alerts/ALT-001/evidence",
     targetId: "tour-evidence-meters",
-    locationLabel: "EVIDENCE EXPLORER // EXPLAINABLE AI",
-    title: "7. Evidence Explorer & TreeSHAP Attributions",
+    locationLabel: "EVIDENCE EXPLORER // HEURISTIC METERS",
+    title: "8. Statistical Evidence & Entropy Meters",
     summary:
-      "Full transparency into machine learning and heuristic detection decisions.",
+      "Raw telemetry and statistical anomaly meters that triggered heuristic detection.",
     whatIsHere: [
-      "Statistical Evidence Meters (Shannon entropy, SYN/ACK ratios, IAT variance)",
-      "Signed TreeSHAP Feature Attributions showing exact mathematical contributions",
-      "Confidence percentage and classification rationale",
+      "Shannon Flow Entropy meter (identifies encrypted C2 tunnels and packed payloads)",
+      "TCP SYN/ACK ratio meter (detects volumetric SYN floods and port sweeps)",
+      "Inter-Arrival Time (IAT) periodicity meter (pinpoints automated C2 beacons)",
     ],
     howToUse: [
-      "Inspect the green and red TreeSHAP bars to see why the AI flagged the event.",
-      "Verify statistical threshold crossings before initiating firewall or SOC action.",
+      "Compare meter values against nominal baseline thresholds to verify alert validity.",
+      "Use these mathematical proofs to justify defensive isolation or firewall rules.",
+    ],
+  },
+  {
+    route: "/alerts/ALT-001/evidence",
+    targetId: "tour-evidence-shap",
+    locationLabel: "EVIDENCE EXPLORER // EXPLAINABLE AI",
+    title: "9. TreeSHAP Feature Attributions",
+    summary:
+      "Complete transparency into machine learning decision boundaries using signed SHAP values.",
+    whatIsHere: [
+      "Signed SHAP waterfall bars (Red pushes toward threat; Green pushes toward nominal)",
+      "Exact feature importance weights for the LightGBM inference model",
+      "Composite classification confidence percentage",
+    ],
+    howToUse: [
+      "Inspect the dominant red bars to understand exactly what features triggered the AI.",
+      "Eliminates 'black-box' ambiguity during critical security audits and forensics.",
     ],
   },
   {
     route: "/graph",
     targetId: "tour-graph-canvas",
     locationLabel: "NETWORK GRAPH // 3D ORBITAL CANVAS",
-    title: "8. Interactive 3D Evidence Graph & Node Inspector",
+    title: "10. 3D Evidence Graph & Node Inspector",
     summary:
-      "Full-screen 3D orbital canvas with interactive node interrogation and Neo4j links.",
+      "Interactive 3D graph canvas mapping host nodes and network communication arcs.",
     whatIsHere: [
-      "Orbit / Pan / Zoom 3D camera controls with Bloom lighting passes",
+      "Orbit / Pan / Zoom 3D WebGL camera with real Bloom glow effects",
       "Interactive Host Nodes clickable for live forensic inspection",
       "Right-hand Node Telemetry Inspector showing connected flow arcs and risk ratings",
     ],
     howToUse: [
-      "Drag with mouse to rotate the sphere; scroll wheel to zoom into specific clusters.",
-      "Click any host sphere to view its IP, severity level, and active attack edges.",
+      "Left-click and drag with your mouse to rotate the perimeter sphere; scroll to zoom.",
+      "Click any host sphere to inspect its IP address, risk score, and active attack edges.",
     ],
   },
   {
     route: "/threats",
     targetId: "tour-sonar-chart",
     locationLabel: "THREAT CENTER // D3 RADAR SWEEP",
-    title: "9. Threat Center & D3 Radial Sonar Sweep",
+    title: "11. Threat Center & D3 Radial Sonar Sweep",
     summary:
       "Polar coordinate sonar visualization mapping threat distributions and severity wedges.",
     whatIsHere: [
@@ -172,7 +213,7 @@ export const INTERACTIVE_TOUR_STEPS: InteractiveTourStep[] = [
       "Forensic profile drilldown pane and historical time filters (1h, 24h, 7d, 30d)",
     ],
     howToUse: [
-      "Click any wedge segment to inspect specific class metrics (e.g. DDoS vs C2).",
+      "Click any wedge segment to inspect specific class metrics (e.g. DDoS vs C2 Beaconing).",
       "Toggle time filters in the top right to analyze weekly or monthly baselines.",
     ],
   },
@@ -180,7 +221,7 @@ export const INTERACTIVE_TOUR_STEPS: InteractiveTourStep[] = [
     route: "/replay",
     targetId: "tour-replay-console",
     locationLabel: "REPLAY LAB // ATTACK SIMULATOR",
-    title: "10. Replay Lab Scenario Simulator",
+    title: "12. Replay Lab Scenario Simulator",
     summary:
       "Hardware-isolated simulation console with physical-style toggle switches for live demonstrations.",
     whatIsHere: [
@@ -189,15 +230,15 @@ export const INTERACTIVE_TOUR_STEPS: InteractiveTourStep[] = [
       "Live trigger buttons that inject real synthetic telemetry into the pipeline",
     ],
     howToUse: [
-      "Click 'RUN SIMULATION' on the 'Multi-Stage APT Kill-Chain' preset.",
-      "Watch alerts propagate in real-time across the Live Monitor, Sphere, and Dossier.",
+      "Toggle the switch to 'ARMED' on any scenario (e.g. Multi-Stage APT Intrusion).",
+      "Click 'ENGAGE' to inject telemetry and watch alerts propagate live across all consoles.",
     ],
   },
   {
     route: "/performance",
     targetId: "tour-perf-charts",
-    locationLabel: "PERFORMANCE // SLA METRICS",
-    title: "11. SLA Telemetry & Latency Percentiles",
+    locationLabel: "PERFORMANCE // SLA TELEMETRY",
+    title: "13. SLA Telemetry & Latency Percentiles",
     summary:
       "Sub-second performance monitoring proving the platform's high-throughput capability.",
     whatIsHere: [
@@ -206,15 +247,15 @@ export const INTERACTIVE_TOUR_STEPS: InteractiveTourStep[] = [
       "Cluster CPU usage and Kafka consumer group lag (0 ms backpressure)",
     ],
     howToUse: [
-      "Verify that P99 latency remains under 10ms during heavy simulated traffic.",
-      "Demonstrate platform scalability and zero-loss packet processing to reviewers.",
+      "Verify that P99 latency remains under 5.0 ms during heavy simulated traffic.",
+      "Demonstrate platform scalability and zero packet drop to SOC reviewers.",
     ],
   },
   {
     route: "/settings",
     targetId: "tour-settings-panel",
     locationLabel: "STATION SETTINGS // PREFERENCES",
-    title: "12. Server-Persisted Settings & Accessibility",
+    title: "14. Server-Persisted Settings & Accessibility",
     summary:
       "Configure your personal station preferences and export configurations.",
     whatIsHere: [
@@ -241,6 +282,8 @@ export const TourGuide: React.FC = () => {
     completeTour,
   } = useAuthStore();
 
+  const [highlightRect, setHighlightRect] = useState<DOMRect | null>(null);
+
   const currentStep = INTERACTIVE_TOUR_STEPS[tourStepIndex] || INTERACTIVE_TOUR_STEPS[0];
   const isLast = tourStepIndex === INTERACTIVE_TOUR_STEPS.length - 1;
   const isFirst = tourStepIndex === 0;
@@ -252,15 +295,64 @@ export const TourGuide: React.FC = () => {
     }
   }, [tourActive, tourStepIndex, currentStep, location.pathname, navigate]);
 
+  // Compute bounding box of the targeted element to create spotlight cutout
+  useEffect(() => {
+    if (!tourActive || !currentStep) return;
+
+    const updateRect = () => {
+      if (currentStep.targetId) {
+        const el = document.getElementById(currentStep.targetId);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          setHighlightRect(rect);
+          // Scroll element into view smoothly if needed
+          el.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+          return;
+        }
+      }
+      setHighlightRect(null);
+    };
+
+    const timer = setTimeout(updateRect, 300);
+    window.addEventListener("resize", updateRect);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("resize", updateRect);
+    };
+  }, [tourActive, tourStepIndex, currentStep, location.pathname]);
+
   if (!tourActive) return null;
 
   return (
     <div className="fixed inset-0 z-50 pointer-events-none select-none font-mono">
+      {/* Target Element Spotlight Cutout & Glowing Halo */}
+      {highlightRect && (
+        <div
+          className="fixed pointer-events-none z-40 transition-all duration-500 ease-out rounded-2xl border-2 border-[#3FC7D4] shadow-[0_0_40px_rgba(63,199,212,0.45)]"
+          style={{
+            top: `${Math.max(0, highlightRect.top - 8)}px`,
+            left: `${Math.max(0, highlightRect.left - 8)}px`,
+            width: `${highlightRect.width + 16}px`,
+            height: `${highlightRect.height + 16}px`,
+          }}
+        >
+          {/* Animated Pulsing Corner Accents */}
+          <span className="absolute -top-1.5 -left-1.5 w-3 h-3 border-t-2 border-l-2 border-[#3FC7D4] animate-ping" />
+          <span className="absolute -bottom-1.5 -right-1.5 w-3 h-3 border-b-2 border-r-2 border-[#3FC7D4] animate-ping" />
+          
+          {/* Floating Target Badge */}
+          <div className="absolute -top-3 right-4 px-2.5 py-0.5 rounded bg-[#3FC7D4] text-[#0B1220] text-[10px] font-bold tracking-wider uppercase shadow-md flex items-center gap-1">
+            <Target className="w-3 h-3" />
+            <span>ACTIVE FOCUS TARGET</span>
+          </div>
+        </div>
+      )}
+
       {/* Ambient Tactical Dark Dimmer */}
       <div className="absolute inset-0 bg-[#0B1220]/75 backdrop-blur-[2px] pointer-events-auto" />
 
       {/* Floating Comprehensive Tactical Station Guide Panel */}
-      <div className="absolute bottom-6 right-6 w-full max-w-xl p-6 rounded-2xl bg-[#131B2E] border-2 border-[#3FC7D4] shadow-[0_0_50px_rgba(63,199,212,0.25)] space-y-4 pointer-events-auto max-h-[90vh] overflow-y-auto">
+      <div className="absolute bottom-6 right-6 w-full max-w-xl p-6 rounded-2xl bg-[#131B2E] border-2 border-[#3FC7D4] shadow-[0_0_50px_rgba(63,199,212,0.3)] space-y-4 pointer-events-auto max-h-[90vh] overflow-y-auto z-50">
         {/* Header Ribbon */}
         <div className="flex items-center justify-between pb-3 border-b border-[#3FC7D4]/20">
           <div className="flex items-center gap-2 text-xs font-bold text-[#3FC7D4]">

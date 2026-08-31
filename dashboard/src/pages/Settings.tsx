@@ -48,7 +48,7 @@ export const SettingsPage: React.FC = () => {
       </div>
 
       {/* Grid: 3 Main Preference Panels */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 font-mono text-xs">
+      <div id="tour-settings-panel" className="grid grid-cols-1 lg:grid-cols-2 gap-5 font-mono text-xs">
         {/* Panel 1: Alerting & Audio */}
         <div className="p-5 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/15 space-y-4">
           <h3 className="text-xs font-bold text-[#8A95AA] uppercase tracking-wider flex items-center gap-2">

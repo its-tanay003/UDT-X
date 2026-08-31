@@ -66,9 +66,9 @@ export const OverviewPage: React.FC = () => {
       </div>
 
       {/* Grid: 4 Instrument KPI Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+      <div id="tour-kpis" className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         {/* KPI 1: Active Wire Flow */}
-        <div className="p-5 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/15 relative overflow-hidden flex flex-col justify-between">
+        <div id="tour-kpi-wire" className="p-5 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/15 relative overflow-hidden flex flex-col justify-between">
           <div className="flex items-center justify-between text-[#8A95AA] text-xs font-mono">
             <span>SUSTAINED FLOW RATE</span>
             <Activity className="w-4 h-4 text-[#3FC7D4]" />
@@ -92,7 +92,7 @@ export const OverviewPage: React.FC = () => {
         </div>
 
         {/* KPI 2: Active Threats */}
-        <div className="p-5 rounded-xl bg-[#131B2E] border border-[#FF8A3D]/25 relative overflow-hidden flex flex-col justify-between">
+        <div id="tour-kpi-threats" className="p-5 rounded-xl bg-[#131B2E] border border-[#FF8A3D]/25 relative overflow-hidden flex flex-col justify-between">
           <div className="flex items-center justify-between text-[#8A95AA] text-xs font-mono">
             <span>ACTIVE ANOMALIES</span>
             <Zap className="w-4 h-4 text-[#FF8A3D]" />
@@ -115,7 +115,7 @@ export const OverviewPage: React.FC = () => {
         </div>
 
         {/* KPI 3: Correlated Incidents */}
-        <div className="p-5 rounded-xl bg-[#131B2E] border border-[#FF4757]/30 relative overflow-hidden flex flex-col justify-between">
+        <div id="tour-kpi-incidents" className="p-5 rounded-xl bg-[#131B2E] border border-[#FF4757]/30 relative overflow-hidden flex flex-col justify-between">
           <div className="flex items-center justify-between text-[#8A95AA] text-xs font-mono">
             <span>KILL-CHAIN INCIDENTS</span>
             <Flame className="w-4 h-4 text-[#FF4757]" />
@@ -132,7 +132,7 @@ export const OverviewPage: React.FC = () => {
         </div>
 
         {/* KPI 4: Alerts Per Minute */}
-        <div className="p-5 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/15 relative overflow-hidden flex flex-col justify-between">
+        <div id="tour-kpi-alerts" className="p-5 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/15 relative overflow-hidden flex flex-col justify-between">
           <div className="flex items-center justify-between text-[#8A95AA] text-xs font-mono">
             <span>SCORED ALERTS / MIN</span>
             <ShieldAlert className="w-4 h-4 text-[#3FC7D4]" />
@@ -158,7 +158,7 @@ export const OverviewPage: React.FC = () => {
       {/* Row 2: Real Ambient Listening Sphere + Risk Posture Ring */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Ambient Listening Sphere Column (Bound to Real Graph Data) */}
-        <div className="lg:col-span-7 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/20 p-5 flex flex-col justify-between">
+        <div id="tour-sphere-panel" className="lg:col-span-7 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/20 p-5 flex flex-col justify-between">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Globe className="w-4 h-4 text-[#3FC7D4]" />
@@ -184,7 +184,7 @@ export const OverviewPage: React.FC = () => {
         </div>
 
         {/* Composite Risk Dial Column */}
-        <div className="lg:col-span-5 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/20 p-5 flex flex-col items-center justify-between">
+        <div id="tour-risk-panel" className="lg:col-span-5 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/20 p-5 flex flex-col items-center justify-between">
           <h3 className="text-xs font-mono font-bold text-[#8A95AA] uppercase tracking-wider self-start">
             Composite Threat Risk Posture
           </h3>
@@ -246,7 +246,7 @@ export const OverviewPage: React.FC = () => {
       </div>
 
       {/* Row 3: Reference Engine Cluster Subsystem Architecture */}
-      <div className="rounded-xl bg-[#131B2E] border border-[#3FC7D4]/15 p-5">
+      <div id="tour-engines-grid" className="rounded-xl bg-[#131B2E] border border-[#3FC7D4]/15 p-5">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-xs font-mono font-bold text-[#8A95AA] uppercase tracking-wider">
             Detection & Inference Subsystem Reference Architecture
