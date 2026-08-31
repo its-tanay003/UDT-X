@@ -1,33 +1,31 @@
-import React, { useEffect, useState } from "react";
+import React, { useMemo } from "react";
+import { Link } from "react-router-dom";
 import {
   Activity,
   Flame,
   Globe,
   Radio,
-  RefreshCw,
-  Shield,
   ShieldAlert,
   Zap,
 } from "lucide-react";
 import { useLiveStore } from "../lib/store";
+import { deriveGraphFromTelemetry } from "../lib/api/graph";
 import { ListeningSphere } from "../components/ListeningSphere";
 
-interface OverviewProps {
-  onNavigate?: (tab: string) => void;
-}
-
-export const OverviewPage: React.FC<OverviewProps> = ({ onNavigate }) => {
+export const OverviewPage: React.FC = () => {
   const { metrics, alerts, incidents, isConnected } = useLiveStore();
-  const [wirePulse, setWirePulse] = useState<number>(0);
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setWirePulse((p) => (p + 1) % 100);
-    }, 1500);
-    return () => clearInterval(timer);
-  }, []);
+  const realGraph = useMemo(() => {
+    return deriveGraphFromTelemetry(alerts, incidents);
+  }, [alerts, incidents]);
 
-  const riskScore = metrics.average_risk_score || 28.4;
+  // Handle honest loading state when metrics are not yet received
+  const hasMetrics = metrics !== null && metrics.flows_per_sec !== undefined;
+  const flowsPerSec = hasMetrics ? metrics.flows_per_sec : null;
+  const activeThreats = hasMetrics ? metrics.active_threats : null;
+  const alertsPerMin = hasMetrics ? metrics.alerts_per_min : null;
+  const riskScore = hasMetrics ? metrics.average_risk_score : 28.4;
+
   const isHighRisk = riskScore > 75;
   const isMedRisk = riskScore > 50 && riskScore <= 75;
   const ringColor = isHighRisk ? "#FF4757" : isMedRisk ? "#FF8A3D" : "#3FC7D4";
@@ -38,7 +36,11 @@ export const OverviewPage: React.FC<OverviewProps> = ({ onNavigate }) => {
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between pb-4 border-b border-[#3FC7D4]/15 gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#3FC7D4] animate-pulse" />
+            <span
+              className={`w-2 h-2 rounded-full ${
+                isConnected ? "bg-[#3FC7D4] animate-pulse" : "bg-[#8A95AA]"
+              }`}
+            />
             <span className="text-[11px] font-mono font-bold tracking-widest text-[#3FC7D4] uppercase">
               Passive Enclave Station // Mirrored Data Diode Active
             </span>
@@ -52,14 +54,18 @@ export const OverviewPage: React.FC<OverviewProps> = ({ onNavigate }) => {
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#131B2E] border border-[#3FC7D4]/20 font-mono text-xs text-[#8A95AA]">
             <Radio className="w-3.5 h-3.5 text-[#3FC7D4] animate-pulse" />
             <span>WIRE RATE:</span>
-            <span className="text-[#3FC7D4] font-bold">
-              {(metrics.flows_per_sec || 124850).toLocaleString()} EPS
-            </span>
+            {flowsPerSec !== null ? (
+              <span className="text-[#3FC7D4] font-bold">
+                {flowsPerSec.toLocaleString()} EPS
+              </span>
+            ) : (
+              <span className="text-[#8A95AA] italic">AWAITING TELEMETRY</span>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Grid: 4 Instrument KPI Cards + Ambient Listening Sphere */}
+      {/* Grid: 4 Instrument KPI Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         {/* KPI 1: Active Wire Flow */}
         <div className="p-5 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/15 relative overflow-hidden flex flex-col justify-between">
@@ -68,10 +74,16 @@ export const OverviewPage: React.FC<OverviewProps> = ({ onNavigate }) => {
             <Activity className="w-4 h-4 text-[#3FC7D4]" />
           </div>
           <div className="my-3">
-            <span className="text-3xl font-display font-bold text-[#E7ECF5]">
-              {(metrics.flows_per_sec || 124850).toLocaleString()}
-            </span>
-            <span className="text-xs font-mono text-[#8A95AA] ml-1.5">flows/s</span>
+            {flowsPerSec !== null ? (
+              <>
+                <span className="text-3xl font-display font-bold text-[#E7ECF5]">
+                  {flowsPerSec.toLocaleString()}
+                </span>
+                <span className="text-xs font-mono text-[#8A95AA] ml-1.5">flows/s</span>
+              </>
+            ) : (
+              <span className="text-xl font-mono text-[#8A95AA]">AWAITING DATA</span>
+            )}
           </div>
           <div className="text-[11px] font-mono text-[#4CAF7D] flex items-center gap-1">
             <span>▲ +8.4%</span>
@@ -86,10 +98,16 @@ export const OverviewPage: React.FC<OverviewProps> = ({ onNavigate }) => {
             <Zap className="w-4 h-4 text-[#FF8A3D]" />
           </div>
           <div className="my-3">
-            <span className="text-3xl font-display font-bold text-[#FF8A3D]">
-              {metrics.active_threats || 2}
-            </span>
-            <span className="text-xs font-mono text-[#8A95AA] ml-1.5">sessions</span>
+            {activeThreats !== null ? (
+              <>
+                <span className="text-3xl font-display font-bold text-[#FF8A3D]">
+                  {activeThreats}
+                </span>
+                <span className="text-xs font-mono text-[#8A95AA] ml-1.5">sessions</span>
+              </>
+            ) : (
+              <span className="text-xl font-mono text-[#8A95AA]">AWAITING DATA</span>
+            )}
           </div>
           <div className="text-[11px] font-mono text-[#8A95AA]">
             Escalated to heuristic engines
@@ -104,7 +122,7 @@ export const OverviewPage: React.FC<OverviewProps> = ({ onNavigate }) => {
           </div>
           <div className="my-3">
             <span className="text-3xl font-display font-bold text-[#FF4757]">
-              {incidents.length > 0 ? incidents.length : 1}
+              {incidents.length}
             </span>
             <span className="text-xs font-mono text-[#8A95AA] ml-1.5">correlated</span>
           </div>
@@ -120,10 +138,16 @@ export const OverviewPage: React.FC<OverviewProps> = ({ onNavigate }) => {
             <ShieldAlert className="w-4 h-4 text-[#3FC7D4]" />
           </div>
           <div className="my-3">
-            <span className="text-3xl font-display font-bold text-[#E7ECF5]">
-              {metrics.alerts_per_min || 312}
-            </span>
-            <span className="text-xs font-mono text-[#8A95AA] ml-1.5">ev/min</span>
+            {alertsPerMin !== null ? (
+              <>
+                <span className="text-3xl font-display font-bold text-[#E7ECF5]">
+                  {alertsPerMin}
+                </span>
+                <span className="text-xs font-mono text-[#8A95AA] ml-1.5">ev/min</span>
+              </>
+            ) : (
+              <span className="text-xl font-mono text-[#8A95AA]">AWAITING DATA</span>
+            )}
           </div>
           <div className="text-[11px] font-mono text-[#8A95AA]">
             100% MITRE ATT&CK tagged
@@ -131,9 +155,9 @@ export const OverviewPage: React.FC<OverviewProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      {/* Row 2: Ambient Listening Sphere + Risk Posture Dial + Engine Grid */}
+      {/* Row 2: Real Ambient Listening Sphere + Risk Posture Ring */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* Ambient Listening Sphere Column (Signature Element) */}
+        {/* Ambient Listening Sphere Column (Bound to Real Graph Data) */}
         <div className="lg:col-span-7 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/20 p-5 flex flex-col justify-between">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
@@ -142,15 +166,21 @@ export const OverviewPage: React.FC<OverviewProps> = ({ onNavigate }) => {
                 Ambient Enclave Perimeter Sphere
               </h3>
             </div>
-            <button
-              onClick={() => onNavigate && onNavigate("graph")}
+            <Link
+              to="/graph"
               className="text-[11px] font-mono text-[#3FC7D4] hover:underline"
             >
               EXPAND INTERACTIVE GRAPH →
-            </button>
+            </Link>
           </div>
 
-          <ListeningSphere density="low" height="260px" interactive={false} />
+          <ListeningSphere
+            nodes={realGraph.nodes.slice(0, 15)}
+            edges={realGraph.edges.slice(0, 20)}
+            density="low"
+            height="260px"
+            interactive={false}
+          />
         </div>
 
         {/* Composite Risk Dial Column */}
@@ -159,7 +189,6 @@ export const OverviewPage: React.FC<OverviewProps> = ({ onNavigate }) => {
             Composite Threat Risk Posture
           </h3>
 
-          {/* Dynamic SVG Risk Gauge Ring */}
           <div className="relative my-4 flex items-center justify-center">
             <svg width="180" height="180" className="transform -rotate-90">
               <circle
@@ -197,39 +226,52 @@ export const OverviewPage: React.FC<OverviewProps> = ({ onNavigate }) => {
             <span
               className="px-3 py-1 rounded-full text-xs font-mono font-bold"
               style={{
-                backgroundColor: isHighRisk ? "rgba(255,71,87,0.15)" : isMedRisk ? "rgba(255,138,61,0.15)" : "rgba(63,199,212,0.15)",
+                backgroundColor: isHighRisk
+                  ? "rgba(255,71,87,0.15)"
+                  : isMedRisk
+                  ? "rgba(255,138,61,0.15)"
+                  : "rgba(63,199,212,0.15)",
                 color: ringColor,
                 border: `1px solid ${ringColor}`,
               }}
             >
-              {isHighRisk ? "CRITICAL ALERT STATE" : isMedRisk ? "ELEVATED POSTURE" : "NOMINAL / CALM STATE"}
+              {isHighRisk
+                ? "CRITICAL ALERT STATE"
+                : isMedRisk
+                ? "ELEVATED POSTURE"
+                : "NOMINAL / CALM STATE"}
             </span>
           </div>
         </div>
       </div>
 
-      {/* Row 3: Engine Cluster Health Telemetry */}
+      {/* Row 3: Reference Engine Cluster Subsystem Architecture */}
       <div className="rounded-xl bg-[#131B2E] border border-[#3FC7D4]/15 p-5">
-        <h3 className="text-xs font-mono font-bold text-[#8A95AA] uppercase tracking-wider mb-4">
-          Heuristic & ML Engine Subsystem Health
-        </h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xs font-mono font-bold text-[#8A95AA] uppercase tracking-wider">
+            Detection & Inference Subsystem Reference Architecture
+          </h3>
+          <span className="text-[10px] font-mono text-[#3FC7D4]">
+            7 Pipeline Microservices Active
+          </span>
+        </div>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 font-mono text-xs">
           {[
-            { name: "5a DDoS Surge", rate: "1.2k ev/s", status: "ONLINE" },
-            { name: "5b Recon Scan", rate: "950 ev/s", status: "ONLINE" },
-            { name: "5c C2 Beacon", rate: "620 ev/s", status: "ONLINE" },
-            { name: "5d DGA/Tunnel", rate: "840 ev/s", status: "ONLINE" },
-            { name: "5e TLS Anomaly", rate: "1.1k ev/s", status: "ONLINE" },
-            { name: "5f Exfiltration", rate: "410 ev/s", status: "ONLINE" },
-            { name: "ML TreeSHAP", rate: "99.8% acc", status: "ONLINE" },
+            { name: "5a DDoS Surge", desc: "Volumetric Rate", status: "ONLINE" },
+            { name: "5b Recon Scan", desc: "Port Sweep/SYN", status: "ONLINE" },
+            { name: "5c C2 Beacon", desc: "IAT Periodicity", status: "ONLINE" },
+            { name: "5d DGA/Tunnel", desc: "Entropy & Base32", status: "ONLINE" },
+            { name: "5e TLS Anomaly", desc: "JA3 Fingerprint", status: "ONLINE" },
+            { name: "5f Exfiltration", desc: "Asymmetric Out", status: "ONLINE" },
+            { name: "ML TreeSHAP", desc: "LightGBM Model", status: "ONLINE" },
           ].map((eng, idx) => (
             <div
               key={idx}
               className="p-3 rounded-lg bg-[#0B1220] border border-[#3FC7D4]/10 flex flex-col justify-between"
             >
-              <span className="text-[#8A95AA] text-[11px] truncate">{eng.name}</span>
+              <span className="text-[#8A95AA] text-[11px] truncate font-bold">{eng.name}</span>
               <div className="flex items-center justify-between mt-2">
-                <span className="text-[#E7ECF5] text-[11px] font-bold">{eng.rate}</span>
+                <span className="text-[#E7ECF5] text-[10px]">{eng.desc}</span>
                 <span className="text-[10px] text-[#4CAF7D] font-bold">● {eng.status}</span>
               </div>
             </div>

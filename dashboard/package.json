@@ -12,6 +12,7 @@
   "dependencies": {
     "@react-three/drei": "^10.7.8",
     "@react-three/fiber": "^9.7.0",
+    "@react-three/postprocessing": "^3.1.1",
     "@tanstack/react-query": "^5.102.8",
     "@tanstack/react-virtual": "^3.14.10",
     "@types/cytoscape": "^3.21.9",
@@ -24,6 +25,7 @@
     "lucide-react": "^1.34.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "react-router-dom": "^7.18.3",
     "recharts": "^3.10.1",
     "tailwind-merge": "^3.6.0",
     "three": "^0.184.0",

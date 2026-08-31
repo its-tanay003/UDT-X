@@ -1,17 +1,15 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
+import { BrowserRouter, Routes, Route, NavLink, useLocation } from "react-router-dom";
 import {
   Activity,
-  BarChart2,
-  Cpu,
+  AlertCircle,
+  Database,
   Flame,
   Globe,
-  Layers,
-  Lock,
-  Network,
   Radio,
+  RefreshCw,
+  Search,
   Shield,
-  ShieldAlert,
-  Sparkles,
   Zap,
 } from "lucide-react";
 import { useLiveStore } from "./lib/store";
@@ -24,157 +22,141 @@ import { ThreatCenterPage } from "./pages/ThreatCenter";
 import { ReplayLabPage } from "./pages/ReplayLab";
 import { PerformancePage } from "./pages/Performance";
 
-export function App() {
-  const [activeTab, setActiveTab] = useState<string>("overview");
-  const [selectedIncidentId, setSelectedIncidentId] = useState<string>("INC-20260827-01");
-  const [selectedAlertId, setSelectedAlertId] = useState<string>("ALT-EXFIL-003");
-
-  const { isConnected, connectWebSocket } = useLiveStore();
-
-  useEffect(() => {
-    const disconnect = connectWebSocket("ws://localhost:8000/ws/live");
-    return () => disconnect();
-  }, [connectWebSocket]);
+const ConsoleRail: React.FC = () => {
+  const { isConnected, isConnecting } = useLiveStore();
 
   const navItems = [
-    { id: "overview", label: "Security Overview", icon: Shield },
-    { id: "live", label: "Live Monitor", icon: Activity },
-    { id: "incident", label: "Incident Dossier", icon: Flame },
-    { id: "evidence", label: "Evidence Explorer", icon: ShieldAlert },
-    { id: "graph", label: "Network Graph", icon: Network },
-    { id: "threats", label: "Threat Center", icon: BarChart2 },
-    { id: "replay", label: "Replay Lab (SIH Demo)", icon: Sparkles },
-    { id: "performance", label: "Performance", icon: Cpu },
+    { to: "/", label: "OVERVIEW", icon: Shield },
+    { to: "/monitor", label: "LIVE MONITOR", icon: Radio },
+    { to: "/incidents/INC-2026-0831-01", label: "INCIDENT DOSSIER", icon: Flame },
+    { to: "/alerts/ALT-001/evidence", label: "EVIDENCE EXPLORER", icon: Search },
+    { to: "/graph", label: "NETWORK GRAPH", icon: Globe },
+    { to: "/threats", label: "THREAT CENTER", icon: Zap },
+    { to: "/replay", label: "REPLAY LAB", icon: RefreshCw },
+    { to: "/performance", label: "PERFORMANCE", icon: Activity },
   ];
 
   return (
-    <div className="min-h-screen bg-[#0B1220] flex text-[#E7ECF5] font-sans selection:bg-[#3FC7D4] selection:text-[#0B1220]">
-      {/* Left Console Rail Navigation (Mission-Control Shell) */}
-      <aside className="w-64 border-r border-[#3FC7D4]/15 bg-[#0B1220]/95 backdrop-blur-xl flex flex-col justify-between p-4 sticky top-0 h-screen z-50">
-        <div className="space-y-6">
-          {/* Station Brand Title */}
-          <div className="flex items-center gap-3 px-2 py-1">
-            <div className="p-2 rounded-lg bg-[#131B2E] border border-[#3FC7D4]/30 text-[#3FC7D4] shadow-[0_0_12px_rgba(63,199,212,0.2)]">
-              <Shield className="w-5 h-5" />
+    <aside className="w-64 bg-[#0B1220] border-r border-[#3FC7D4]/15 flex flex-col justify-between shrink-0 p-4 select-none">
+      <div className="space-y-6">
+        {/* Enclave Brand & Header */}
+        <div className="flex items-center gap-3 px-2 py-1">
+          <div className="w-8 h-8 rounded-lg bg-[#3FC7D4]/15 border border-[#3FC7D4]/40 flex items-center justify-center">
+            <Shield className="w-4 h-4 text-[#3FC7D4]" />
+          </div>
+          <div>
+            <div className="font-display font-bold text-sm tracking-wider text-[#E7ECF5]">
+              UDT-X ENCLAVE
             </div>
-            <div>
-              <div className="font-display font-bold text-sm tracking-wider text-[#E7ECF5]">
-                UDT-X // DEFENSE
-              </div>
-              <div className="text-[10px] font-mono text-[#8A95AA] uppercase tracking-widest">
-                Passive Station v1.0
-              </div>
+            <div className="text-[10px] font-mono text-[#8A95AA]">
+              SIGINT LISTENING POST
             </div>
           </div>
-
-          {/* Navigation Items */}
-          <nav className="space-y-1 font-mono text-xs">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left transition-all ${
-                    isActive
-                      ? "bg-[#131B2E] text-[#3FC7D4] border border-[#3FC7D4]/40 shadow-[0_0_12px_rgba(63,199,212,0.15)] font-bold"
-                      : "text-[#8A95AA] hover:text-[#E7ECF5] hover:bg-[#131B2E]/50"
-                  }`}
-                >
-                  <Icon className={`w-4 h-4 ${isActive ? "text-[#3FC7D4]" : "text-[#8A95AA]"}`} />
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
-          </nav>
         </div>
 
-        {/* Persistent Console Status Footer */}
-        <div className="p-3.5 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/15 space-y-2 font-mono text-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] text-[#8A95AA] uppercase">DATA DIODE LINK</span>
-            <div className="flex items-center gap-1.5">
+        {/* Data Diode Status Box */}
+        <div className="p-3 rounded-lg bg-[#131B2E] border border-[#3FC7D4]/20 space-y-2">
+          <div className="flex items-center justify-between text-[11px] font-mono">
+            <span className="text-[#8A95AA]">DATA DIODE:</span>
+            <span
+              className={`font-bold flex items-center gap-1.5 ${
+                isConnected
+                  ? "text-[#4CAF7D]"
+                  : isConnecting
+                  ? "text-[#FF8A3D]"
+                  : "text-[#8A95AA]"
+              }`}
+            >
               <span
                 className={`w-2 h-2 rounded-full ${
-                  isConnected ? "bg-[#4CAF7D] animate-pulse" : "bg-[#3FC7D4] animate-ping"
+                  isConnected
+                    ? "bg-[#4CAF7D] animate-pulse"
+                    : isConnecting
+                    ? "bg-[#FF8A3D] animate-ping"
+                    : "bg-[#8A95AA]"
                 }`}
               />
-              <span className="text-[11px] font-bold text-[#E7ECF5]">
-                {isConnected ? "ONLINE" : "LISTENING"}
-              </span>
-            </div>
+              {isConnected ? "ONLINE" : isConnecting ? "CONNECTING" : "LISTENING"}
+            </span>
           </div>
-          <div className="text-[10px] text-[#8A95AA] leading-relaxed">
-            One-Way Optical Ingress // Zero Return Path
+          <div className="text-[10px] font-mono text-[#8A95AA]">
+            Direction: <strong className="text-[#3FC7D4]">INWARD ONLY (PASSIVE)</strong>
           </div>
         </div>
-      </aside>
 
-      {/* Main Content Viewport */}
-      <main className="flex-1 p-6 md:p-8 overflow-y-auto max-w-7xl">
-        {activeTab === "overview" && (
-          <OverviewPage onNavigate={(t) => setActiveTab(t)} />
-        )}
-        {activeTab === "live" && (
-          <LiveMonitorPage
-            onSelectAlert={(id) => {
-              setSelectedAlertId(id);
-              setActiveTab("evidence");
-            }}
-            onSelectIncident={(id) => {
-              setSelectedIncidentId(id);
-              setActiveTab("incident");
-            }}
-          />
-        )}
-        {activeTab === "incident" && (
-          <IncidentDetailPage
-            incidentId={selectedIncidentId}
-            onBack={() => setActiveTab("overview")}
-            onSelectAlert={(id) => {
-              setSelectedAlertId(id);
-              setActiveTab("evidence");
-            }}
-            onNavigateGraph={() => setActiveTab("graph")}
-          />
-        )}
-        {activeTab === "evidence" && (
-          <EvidenceExplorerPage
-            alertId={selectedAlertId}
-            onBack={() => setActiveTab("live")}
-          />
-        )}
-        {activeTab === "graph" && (
-          <NetworkGraphPage
-            onBack={() => setActiveTab("overview")}
-            onSelectAlert={(id) => {
-              setSelectedAlertId(id);
-              setActiveTab("evidence");
-            }}
-          />
-        )}
-        {activeTab === "threats" && (
-          <ThreatCenterPage
-            onBack={() => setActiveTab("overview")}
-            onSelectThreat={() => setActiveTab("live")}
-          />
-        )}
-        {activeTab === "replay" && (
-          <ReplayLabPage
-            onBack={() => setActiveTab("overview")}
-            onSelectAlert={(id) => {
-              setSelectedAlertId(id);
-              setActiveTab("evidence");
-            }}
-          />
-        )}
-        {activeTab === "performance" && (
-          <PerformancePage onBack={() => setActiveTab("overview")} />
-        )}
-      </main>
-    </div>
+        {/* Navigation Rail Links */}
+        <nav className="space-y-1">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.to === "/"}
+                className={({ isActive }) =>
+                  `w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-mono transition-all ${
+                    isActive
+                      ? "bg-[#1B2540] text-[#3FC7D4] border-l-2 border-[#3FC7D4] font-bold shadow-[inset_0_0_12px_rgba(63,199,212,0.1)]"
+                      : "text-[#8A95AA] hover:bg-[#131B2E] hover:text-[#E7ECF5]"
+                  }`
+                }
+              >
+                <Icon className="w-4 h-4 shrink-0" />
+                <span>{item.label}</span>
+              </NavLink>
+            );
+          })}
+        </nav>
+      </div>
+
+      {/* Footer System Telemetry */}
+      <div className="pt-4 border-t border-[#3FC7D4]/10 text-[10px] font-mono text-[#8A95AA] space-y-1">
+        <div className="flex justify-between">
+          <span>PIPELINE:</span>
+          <span className="text-[#3FC7D4]">v1.0.0 PROD</span>
+        </div>
+        <div className="flex justify-between">
+          <span>ENCLAVE:</span>
+          <span className="text-[#E7ECF5]">AIR-GAPPED</span>
+        </div>
+      </div>
+    </aside>
   );
-}
+};
+
+export const App: React.FC = () => {
+  const { connectWebSocket } = useLiveStore();
+
+  useEffect(() => {
+    // Open WebSocket once on mount with auto-reconnect and REST hydration
+    const cleanup = connectWebSocket("ws://localhost:8000/ws/live", "http://localhost:8000");
+    return cleanup;
+  }, [connectWebSocket]);
+
+  return (
+    <BrowserRouter>
+      <div className="w-screen h-screen bg-[#0B1220] text-[#E7ECF5] flex overflow-hidden font-sans">
+        {/* Left Console Rail Navigation */}
+        <ConsoleRail />
+
+        {/* Main Mission Control Screen Area */}
+        <main className="flex-1 overflow-y-auto p-6 relative">
+          <Routes>
+            <Route path="/" element={<OverviewPage />} />
+            <Route path="/monitor" element={<LiveMonitorPage />} />
+            <Route path="/incidents/:id" element={<IncidentDetailPage />} />
+            <Route path="/alerts/:id/evidence" element={<EvidenceExplorerPage />} />
+            <Route path="/graph" element={<NetworkGraphPage />} />
+            <Route path="/threats" element={<ThreatCenterPage />} />
+            <Route path="/replay" element={<ReplayLabPage />} />
+            <Route path="/performance" element={<PerformancePage />} />
+            {/* Fallback */}
+            <Route path="*" element={<OverviewPage />} />
+          </Routes>
+        </main>
+      </div>
+    </BrowserRouter>
+  );
+};
 
 export default App;
