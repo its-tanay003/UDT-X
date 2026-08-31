@@ -78,21 +78,31 @@ def test_risk_calculator_composite_scoring() -> None:
     assert risk_correlated >= risk_isolated
 
 
+def _get_auth_headers(client: TestClient) -> dict[str, str]:
+    login_resp = client.post(
+        "/auth/login",
+        json={"email": "admin@udtx.local", "password": "AdminEnclave2026!"},
+    )
+    token = login_resp.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
+
+
 def test_alert_and_incident_api_endpoints() -> None:
     client = TestClient(app)
+    headers = _get_auth_headers(client)
 
     # 1. Post synthetic alert
     alert = _make_test_alert(alert_id="alt-api-test-99")
-    post_resp = client.post("/alerts", json=alert.model_dump(mode="json"))
+    post_resp = client.post("/alerts", json=alert.model_dump(mode="json"), headers=headers)
     assert post_resp.status_code == 201
 
     # 2. Retrieve alert by ID
-    get_resp = client.get("/alerts/alt-api-test-99")
+    get_resp = client.get("/alerts/alt-api-test-99", headers=headers)
     assert get_resp.status_code == 200
     assert get_resp.json()["alert_id"] == "alt-api-test-99"
 
     # 3. Filter alerts
-    list_resp = client.get("/alerts?threat_class=C2_BEACONING")
+    list_resp = client.get("/alerts?threat_class=C2_BEACONING", headers=headers)
     assert list_resp.status_code == 200
     assert len(list_resp.json()) >= 1
 
@@ -111,16 +121,16 @@ def test_alert_and_incident_api_endpoints() -> None:
         severity=SeverityLevel.HIGH,
         risk_score=85.0,
     )
-    inc_post = client.post("/incidents", json=incident.model_dump(mode="json"))
+    inc_post = client.post("/incidents", json=incident.model_dump(mode="json"), headers=headers)
     assert inc_post.status_code == 201
 
     # 5. Retrieve incident
-    inc_get = client.get("/incidents/inc-api-test-88")
+    inc_get = client.get("/incidents/inc-api-test-88", headers=headers)
     assert inc_get.status_code == 200
     assert inc_get.json()["incident_id"] == "inc-api-test-88"
 
     # 6. Performance metrics
-    perf_resp = client.get("/performance")
+    perf_resp = client.get("/performance", headers=headers)
     assert perf_resp.status_code == 200
     perf_data = perf_resp.json()
     assert "total_alerts" in perf_data
@@ -129,25 +139,28 @@ def test_alert_and_incident_api_endpoints() -> None:
 
 def test_cef_and_syslog_export_endpoint() -> None:
     client = TestClient(app)
+    headers = _get_auth_headers(client)
     alert = _make_test_alert(alert_id="alt-export-01")
-    client.post("/alerts", json=alert.model_dump(mode="json"))
+    client.post("/alerts", json=alert.model_dump(mode="json"), headers=headers)
 
     # Test CEF Export
-    cef_resp = client.get("/alerts/export?format=cef")
+    cef_resp = client.get("/alerts/export?format=cef", headers=headers)
     assert cef_resp.status_code == 200
     assert "CEF:0|UDTX|UDT-X Telemetry Platform" in cef_resp.text
     assert "src=10.0.0.1" in cef_resp.text
 
     # Test Syslog RFC 5424 Export
-    syslog_resp = client.get("/alerts/export?format=syslog")
+    syslog_resp = client.get("/alerts/export?format=syslog", headers=headers)
     assert syslog_resp.status_code == 200
     assert "udtx-sensor udtx-risk-engine" in syslog_resp.text
 
 
 def test_websocket_realtime_stream() -> None:
     client = TestClient(app)
+    headers = _get_auth_headers(client)
+    token = headers["Authorization"].replace("Bearer ", "")
 
-    with client.websocket_connect("/ws/live") as ws:
+    with client.websocket_connect(f"/ws/live?token={token}") as ws:
         init_msg = json.loads(ws.receive_text())
         assert init_msg["type"] == "CONNECTED"
 

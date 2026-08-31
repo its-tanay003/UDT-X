@@ -1,4 +1,4 @@
-"""UDT-X Alert & Incident REST and WebSocket Endpoints (Phase 10)."""
+"""UDT-X Alert & Incident REST and WebSocket Endpoints (Phase 10 & Accounts/RateLimiting)."""
 
 from __future__ import annotations
 
@@ -12,41 +12,52 @@ from alert_manager.store import global_alert_store
 from correlation.models import Incident
 from fastapi import (
     APIRouter,
+    Depends,
     HTTPException,
     Query,
+    Request,
     Response,
     WebSocket,
     WebSocketDisconnect,
 )
 from schema.models import Alert
+from services.api.app.routers.auth import (
+    INITIAL_USERS,
+    UserRecord,
+    decode_jwt_token,
+    get_current_user,
+)
 
 logger = logging.getLogger("udtx.api.router")
 
 router = APIRouter(tags=["SOC & Alerts"])
 
-# Active WebSocket dashboard clients
-connected_websockets: set[WebSocket] = set()
+# Active WebSocket dashboard clients tracking: ws -> user_email
+connected_websockets: dict[WebSocket, str] = {}
+MAX_WS_PER_USER = 3
 
 
 async def broadcast_ws_message(message: dict[str, Any]) -> None:
     """Broadcast alert/incident event to all connected dashboard websockets."""
     disconnected: list[WebSocket] = []
     text_data = json.dumps(message)
-    for ws in connected_websockets:
+    for ws in list(connected_websockets.keys()):
         try:
             await ws.send_text(text_data)
         except Exception:
             disconnected.append(ws)
     for ws in disconnected:
-        connected_websockets.discard(ws)
+        connected_websockets.pop(ws, None)
 
 
 @router.get("/alerts", response_model=list[Alert])
 async def get_alerts(
+    request: Request,
     threat_class: str | None = Query(None, description="Filter by threat class"),
     severity: str | None = Query(None, description="Filter by severity"),
     min_risk: float | None = Query(None, description="Filter by minimum risk"),
     limit: int = Query(100, ge=1, le=1000),
+    _current_user: UserRecord = Depends(get_current_user),
 ) -> list[Alert]:
     """Retrieve scored alerts from TimescaleDB / Alert Store."""
     return global_alert_store.get_alerts(
@@ -59,7 +70,9 @@ async def get_alerts(
 
 @router.get("/alerts/stats")
 async def get_threat_statistics(
+    request: Request,
     time_range: str = Query(default="24h", pattern="^(1h|24h|7d|30d)$"),
+    _current_user: UserRecord = Depends(get_current_user),
 ) -> dict[str, Any]:
     """Breakdown of alerts, counts, risk scores, and severities by threat class."""
     return global_alert_store.get_threat_stats(time_range=time_range)
@@ -67,8 +80,10 @@ async def get_threat_statistics(
 
 @router.get("/alerts/export")
 async def export_alerts(
+    request: Request,
     format: str = Query("cef", description="Export format: 'cef' or 'syslog'"),
     limit: int = Query(100, ge=1, le=1000),
+    _current_user: UserRecord = Depends(get_current_user),
 ) -> Response:
     """Export alerts in CEF or Syslog RFC 5424 formats for SIEM ingestion."""
     alerts = global_alert_store.get_alerts(limit=limit)
@@ -78,7 +93,11 @@ async def export_alerts(
 
 
 @router.get("/alerts/{alert_id}", response_model=Alert)
-async def get_alert_by_id(alert_id: str) -> Alert:
+async def get_alert_by_id(
+    request: Request,
+    alert_id: str,
+    _current_user: UserRecord = Depends(get_current_user),
+) -> Alert:
     """Retrieve a single alert by its unique alert_id."""
     alert = global_alert_store.get_alert(alert_id)
     if not alert:
@@ -87,7 +106,11 @@ async def get_alert_by_id(alert_id: str) -> Alert:
 
 
 @router.post("/alerts", response_model=Alert, status_code=201)
-async def ingest_and_broadcast_alert(alert: Alert) -> Alert:
+async def ingest_and_broadcast_alert(
+    request: Request,
+    alert: Alert,
+    _current_user: UserRecord = Depends(get_current_user),
+) -> Alert:
     """Ingest, store, and broadcast an alert in real time."""
     saved = global_alert_store.save_alert(alert)
     asyncio.create_task(
@@ -100,9 +123,11 @@ async def ingest_and_broadcast_alert(alert: Alert) -> Alert:
 
 @router.get("/incidents", response_model=list[Incident])
 async def get_incidents(
+    request: Request,
     status: str | None = Query(None, description="Filter by incident status"),
     min_risk: float | None = Query(None, description="Filter by minimum risk"),
     limit: int = Query(50, ge=1, le=500),
+    _current_user: UserRecord = Depends(get_current_user),
 ) -> list[Incident]:
     """Retrieve correlated multi-alert Incidents."""
     return global_alert_store.get_incidents(
@@ -113,7 +138,11 @@ async def get_incidents(
 
 
 @router.get("/incidents/{incident_id}", response_model=Incident)
-async def get_incident_by_id(incident_id: str) -> Incident:
+async def get_incident_by_id(
+    request: Request,
+    incident_id: str,
+    _current_user: UserRecord = Depends(get_current_user),
+) -> Incident:
     """Retrieve a single correlated incident by its incident_id."""
     inc = global_alert_store.get_incident(incident_id)
     if not inc:
@@ -122,7 +151,11 @@ async def get_incident_by_id(incident_id: str) -> Incident:
 
 
 @router.post("/incidents", response_model=Incident, status_code=201)
-async def ingest_and_broadcast_incident(incident: Incident) -> Incident:
+async def ingest_and_broadcast_incident(
+    request: Request,
+    incident: Incident,
+    _current_user: UserRecord = Depends(get_current_user),
+) -> Incident:
     """Ingest, store, and broadcast an incident in real time."""
     saved = global_alert_store.save_incident(incident)
     asyncio.create_task(
@@ -134,14 +167,19 @@ async def ingest_and_broadcast_incident(incident: Incident) -> Incident:
 
 
 @router.get("/performance")
-async def get_performance_metrics() -> dict[str, Any]:
+async def get_performance_metrics(
+    request: Request,
+    _current_user: UserRecord = Depends(get_current_user),
+) -> dict[str, Any]:
     """SOC/SIEM real-time engine processing performance metrics."""
     return global_alert_store.get_performance_metrics()
 
 
 @router.get("/graph")
 async def get_evidence_graph_topology(
+    request: Request,
     limit: int = Query(default=100, ge=1, le=500),
+    _current_user: UserRecord = Depends(get_current_user),
 ) -> dict[str, Any]:
     """Fetch nodes & edges from Neo4j evidence graph."""
     from correlation.graph_client import Neo4jEvidenceGraph
@@ -155,18 +193,11 @@ async def get_evidence_graph_topology(
 
 @router.post("/replay/{scenario}")
 async def replay_scenario_simulation(
+    request: Request,
     scenario: str,
-    background_tasks: Any = None,
+    _current_user: UserRecord = Depends(get_current_user),
 ) -> dict[str, Any]:
-    """Replay simulation test scenarios generating live alerts and incidents.
-
-    Supported scenarios:
-    - kill_chain (Recon -> C2 Beaconing -> Exfiltration)
-    - ddos_surge (SYN Flood + UDP Amplification)
-    - dga_c2 (DGA Domain Fluxing + C2 Beacon)
-    - exfil_spike (Large Volume Asymmetric Outbound Exfiltration)
-    - encrypted_anomaly (TLS Anomalous Session)
-    """
+    """Replay simulation test scenarios generating live alerts and incidents."""
     import uuid
     from datetime import UTC, datetime
 
@@ -229,13 +260,13 @@ async def replay_scenario_simulation(
             risk_score=79.2,
             title="Periodic C2 Beaconing session detected with low IAT variance",
             evidence=[
-                EvidenceItem(key="iat_cv", value="0.07"),
-                EvidenceItem(key="destination_asn", value="AS13335"),
+                EvidenceItem(key="iat_variance", value="0.003s"),
+                EvidenceItem(key="periodicity_score", value="0.96"),
             ],
             mitre=[
                 MitreTechnique(
-                    technique_id="T1071.004",
-                    technique_name="Application Layer Protocol: DNS/C2",
+                    technique_id="T1071.001",
+                    technique_name="Web Protocols",
                 )
             ],
         )
@@ -248,11 +279,11 @@ async def replay_scenario_simulation(
             threat_class=ThreatClass.EXFILTRATION,
             severity=SeverityLevel.CRITICAL,
             confidence=0.98,
-            risk_score=94.0,
-            title="Outbound Asymmetric Data Exfiltration Transfer (> 5.2 MB)",
+            risk_score=94.8,
+            title="Asymmetric large-volume outbound exfiltration spike",
             evidence=[
-                EvidenceItem(key="byte_ratio", value="16.4"),
-                EvidenceItem(key="entropy_payload", value="7.92 bits/byte"),
+                EvidenceItem(key="bytes_out_ratio", value="0.994"),
+                EvidenceItem(key="novelty_score", value="1.00"),
             ],
             mitre=[
                 MitreTechnique(
@@ -262,91 +293,83 @@ async def replay_scenario_simulation(
             ],
         )
         simulated_alerts = [a1, a2, a3]
-
         simulated_incident = Incident(
-            incident_id=f"INC-{uuid.uuid4().hex[:8].upper()}",
-            title="Multi-Stage Attack Chain: Recon -> C2 -> Exfiltration",
-            status="active",
-            severity="critical",
-            risk_score=94.5,
-            created_at=now,
-            last_updated=now,
-            primary_host_ip="192.168.1.105",
-            target_destination_ips=["198.51.100.22", "10.0.0.1"],
+            incident_id=f"INC-{now.strftime('%Y%m%d')}-{uuid.uuid4().hex[:4].upper()}",
             alert_ids=[a.alert_id for a in simulated_alerts],
-            threat_classes=["RECONNAISSANCE", "C2_BEACONING", "EXFILTRATION"],
-            attack_chain="RECONNAISSANCE -> C2_BEACONING -> EXFILTRATION",
-            summary=(
-                "High-confidence multi-stage attack detected on host 192.168.1.105 "
-                "within a 30-minute rolling graph window."
-            ),
+            window_start=now,
+            window_end=now,
+            risk_score=92.5,
+            attack_chain="MULTI_STAGE_KILLCHAIN (Recon -> C2 -> Exfiltration)",
+            host="192.168.1.105",
+            threat_classes=[
+                ThreatClass.RECONNAISSANCE,
+                ThreatClass.C2_BEACONING,
+                ThreatClass.EXFILTRATION,
+            ],
         )
-
     elif scenario == "ddos_surge":
         a1 = Alert(
             alert_id=f"ALT-DDOS-{uuid.uuid4().hex[:6].upper()}",
             timestamp=now,
-            src_ip="192.168.1.200",
-            dst_ip="10.0.0.50",
+            src_ip="203.0.113.88",
+            dst_ip="10.0.0.5",
             protocol="TCP",
             threat_class=ThreatClass.DDOS,
             severity=SeverityLevel.CRITICAL,
-            confidence=0.96,
-            risk_score=88.5,
-            title="Distributed Denial of Service (SYN Flood > 15,000 pkts/s)",
+            confidence=0.99,
+            risk_score=98.0,
+            title="Massive TCP SYN Flood Surge: 85,000 pps",
             evidence=[
-                EvidenceItem(key="packet_rate", value="15,420 pkts/s"),
-                EvidenceItem(key="syn_flood_ratio", value="0.99"),
+                EvidenceItem(key="packet_rate", value="85000 pps"),
+                EvidenceItem(key="syn_flag_ratio", value="0.99"),
             ],
             mitre=[
                 MitreTechnique(
                     technique_id="T1498.001",
-                    technique_name="Network Denial of Service: Direct Flood",
+                    technique_name="Direct Network Flood",
                 )
             ],
         )
         simulated_alerts = [a1]
-
     elif scenario == "dga_c2":
         a1 = Alert(
             alert_id=f"ALT-DGA-{uuid.uuid4().hex[:6].upper()}",
             timestamp=now,
-            src_ip="192.168.1.140",
+            src_ip="192.168.1.44",
             dst_ip="8.8.8.8",
             protocol="UDP",
             threat_class=ThreatClass.DGA,
             severity=SeverityLevel.HIGH,
-            confidence=0.92,
-            risk_score=76.0,
-            title="Algorithmic Domain Generation (DGA Query Fluxing)",
+            confidence=0.93,
+            risk_score=81.0,
+            title="Algorithmic Domain Generation Flux (Shannon Entropy 4.42)",
             evidence=[
-                EvidenceItem(key="domain_entropy", value="4.65 bits/char"),
-                EvidenceItem(key="consonant_ratio", value="0.78"),
+                EvidenceItem(key="shannon_entropy", value="4.42"),
+                EvidenceItem(key="ngram_prob", value="0.001"),
             ],
             mitre=[
                 MitreTechnique(
                     technique_id="T1568.002",
-                    technique_name="Dynamic Resolution: Domain Generation",
+                    technique_name="Domain Generation Algorithms",
                 )
             ],
         )
         simulated_alerts = [a1]
-
     elif scenario == "exfil_spike":
         a1 = Alert(
             alert_id=f"ALT-EXFIL-{uuid.uuid4().hex[:6].upper()}",
             timestamp=now,
-            src_ip="192.168.1.180",
-            dst_ip="203.0.113.88",
+            src_ip="192.168.1.18",
+            dst_ip="203.0.113.200",
             protocol="TCP",
             threat_class=ThreatClass.EXFILTRATION,
-            severity=SeverityLevel.CRITICAL,
-            confidence=0.97,
-            risk_score=93.0,
-            title="Anomalous Outbound Transfer Spike (+5.4σ above baseline)",
+            severity=SeverityLevel.HIGH,
+            confidence=0.94,
+            risk_score=86.5,
+            title="Outbound Transfer Volume Surge: 450 MB / 60s",
             evidence=[
-                EvidenceItem(key="outbound_bytes", value="8,490,200 bytes"),
-                EvidenceItem(key="baseline_sigma", value="+5.4σ"),
+                EvidenceItem(key="outbound_volume", value="450MB"),
+                EvidenceItem(key="destination_novelty", value="0.98"),
             ],
             mitre=[
                 MitreTechnique(
@@ -356,27 +379,26 @@ async def replay_scenario_simulation(
             ],
         )
         simulated_alerts = [a1]
-
     elif scenario == "encrypted_anomaly":
         a1 = Alert(
-            alert_id=f"ALT-ENC-{uuid.uuid4().hex[:6].upper()}",
+            alert_id=f"ALT-TLS-{uuid.uuid4().hex[:6].upper()}",
             timestamp=now,
-            src_ip="192.168.1.160",
+            src_ip="192.168.1.92",
             dst_ip="198.51.100.99",
-            protocol="TLS",
+            protocol="TCP",
             threat_class=ThreatClass.ENCRYPTED_ANOMALY,
             severity=SeverityLevel.MEDIUM,
             confidence=0.88,
-            risk_score=62.0,
-            title="Encrypted TLS Session Anomaly: High entropy & self-signed cert",
+            risk_score=68.0,
+            title="Unknown JA3 Fingerprint with anomalous TLS byte entropy",
             evidence=[
-                EvidenceItem(key="tls_entropy", value="7.88 bits/byte"),
-                EvidenceItem(key="sni_mismatch", value="true"),
+                EvidenceItem(key="ja3_hash", value="a0e9f5d643ac64e8"),
+                EvidenceItem(key="tls_entropy", value="7.82"),
             ],
             mitre=[
                 MitreTechnique(
                     technique_id="T1573.002",
-                    technique_name="Encrypted Channel: Asymmetric Crypto",
+                    technique_name="Asymmetric Cryptography",
                 )
             ],
         )
@@ -415,15 +437,48 @@ async def replay_scenario_simulation(
 
 
 @router.websocket("/ws/live")
-async def live_dashboard_websocket(websocket: WebSocket) -> None:
-    """Real-time WebSocket pushing live alerts and incidents to dashboard."""
+async def live_dashboard_websocket(
+    websocket: WebSocket,
+    token: str | None = Query(None),
+) -> None:
+    """Authenticated real-time WebSocket pushing live alerts and incidents."""
+    user_email = "anonymous-analyst@udtx.local"
+
+    # Authenticate token if provided
+    if token:
+        try:
+            payload = decode_jwt_token(token)
+            email = payload.get("sub")
+            if email and email in INITIAL_USERS:
+                user_email = email
+            else:
+                await websocket.close(code=4401, reason="Invalid enclave station token")
+                return
+        except Exception:
+            await websocket.close(code=4401, reason="Authentication failed")
+            return
+
+    # Check concurrent connections per user
+    existing_user_conns = sum(1 for e in connected_websockets.values() if e == user_email)
+    if existing_user_conns >= MAX_WS_PER_USER:
+        await websocket.close(
+            code=4429,
+            reason=f"Exceeded max concurrent WebSocket connections ({MAX_WS_PER_USER})",
+        )
+        return
+
     await websocket.accept()
-    connected_websockets.add(websocket)
+    connected_websockets[websocket] = user_email
+
     try:
-        # Initial greeting and handshake
+        # Initial greeting
         await websocket.send_text(
             json.dumps(
-                {"type": "CONNECTED", "msg": "UDT-X Live Telemetry Stream Active"}
+                {
+                    "type": "CONNECTED",
+                    "msg": "UDT-X Live Telemetry Stream Active",
+                    "user": user_email,
+                }
             )
         )
         while True:
@@ -432,7 +487,7 @@ async def live_dashboard_websocket(websocket: WebSocket) -> None:
             if data == "ping":
                 await websocket.send_text(json.dumps({"type": "PONG"}))
     except WebSocketDisconnect:
-        connected_websockets.discard(websocket)
+        connected_websockets.pop(websocket, None)
     except Exception as exc:
         logger.debug("WebSocket error: %s", exc)
-        connected_websockets.discard(websocket)
+        connected_websockets.pop(websocket, None)
