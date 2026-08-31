@@ -1,0 +1,106 @@
+{
+  "DDOS": [
+    {
+      "technique_id": "T1498",
+      "technique_name": "Network Denial of Service",
+      "url": "https://attack.mitre.org/techniques/T1498/"
+    },
+    {
+      "technique_id": "T1498.001",
+      "technique_name": "Direct Network Flood",
+      "url": "https://attack.mitre.org/techniques/T1498/001/"
+    },
+    {
+      "technique_id": "T1499",
+      "technique_name": "Endpoint Denial of Service",
+      "url": "https://attack.mitre.org/techniques/T1499/"
+    }
+  ],
+  "C2_BEACONING": [
+    {
+      "technique_id": "T1071",
+      "technique_name": "Application Layer Protocol",
+      "url": "https://attack.mitre.org/techniques/T1071/"
+    },
+    {
+      "technique_id": "T1071.001",
+      "technique_name": "Web Protocols",
+      "url": "https://attack.mitre.org/techniques/T1071/001/"
+    },
+    {
+      "technique_id": "T1571",
+      "technique_name": "Non-Standard Port",
+      "url": "https://attack.mitre.org/techniques/T1571/"
+    },
+    {
+      "technique_id": "T1132",
+      "technique_name": "Data Encoding",
+      "url": "https://attack.mitre.org/techniques/T1132/"
+    }
+  ],
+  "DGA": [
+    {
+      "technique_id": "T1568.002",
+      "technique_name": "Domain Generation Algorithms",
+      "url": "https://attack.mitre.org/techniques/T1568/002/"
+    },
+    {
+      "technique_id": "T1071.004",
+      "technique_name": "DNS",
+      "url": "https://attack.mitre.org/techniques/T1071/004/"
+    }
+  ],
+  "DNS_TUNNELING": [
+    {
+      "technique_id": "T1048.003",
+      "technique_name": "Exfiltration Over Unencrypted Non-C2 Protocol (DNS)",
+      "url": "https://attack.mitre.org/techniques/T1048/003/"
+    },
+    {
+      "technique_id": "T1071.004",
+      "technique_name": "DNS",
+      "url": "https://attack.mitre.org/techniques/T1071/004/"
+    }
+  ],
+  "ENCRYPTED_ANOMALY": [
+    {
+      "technique_id": "T1573.002",
+      "technique_name": "Asymmetric Cryptography",
+      "url": "https://attack.mitre.org/techniques/T1573/002/"
+    },
+    {
+      "technique_id": "T1027",
+      "technique_name": "Obfuscated Files or Information",
+      "url": "https://attack.mitre.org/techniques/T1027/"
+    }
+  ],
+  "RECONNAISSANCE": [
+    {
+      "technique_id": "T1046",
+      "technique_name": "Network Service Discovery",
+      "url": "https://attack.mitre.org/techniques/T1046/"
+    },
+    {
+      "technique_id": "T1595",
+      "technique_name": "Active Scanning",
+      "url": "https://attack.mitre.org/techniques/T1595/"
+    },
+    {
+      "technique_id": "T1595.002",
+      "technique_name": "Vulnerability Scanning",
+      "url": "https://attack.mitre.org/techniques/T1595/002/"
+    }
+  ],
+  "EXFILTRATION": [
+    {
+      "technique_id": "T1048",
+      "technique_name": "Exfiltration Over Alternative Protocol",
+      "url": "https://attack.mitre.org/techniques/T1048/"
+    },
+    {
+      "technique_id": "T1041",
+      "technique_name": "Exfiltration Over C2 Channel",
+      "url": "https://attack.mitre.org/techniques/T1041/"
+    }
+  ]
+}

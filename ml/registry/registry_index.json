@@ -1,0 +1,52 @@
+{
+  "models": {
+    "udtx_ensemble": {
+      "v1.0.0": {
+        "model_name": "udtx_ensemble",
+        "version": "v1.0.0",
+        "registered_at": "2026-08-27T07:57:11.319269+00:00",
+        "datasets": [
+          "CIDDS-001",
+          "CIC-IDS2017",
+          "UNSW-NB15",
+          "CTU-13"
+        ],
+        "features": [
+          "packets_per_sec",
+          "bytes_per_sec",
+          "packet_size_mean",
+          "packet_size_stddev",
+          "window_flow_count",
+          "window_unique_dst_ips",
+          "window_unique_dst_ports",
+          "byte_ratio_out_in",
+          "packet_ratio_out_in",
+          "duration_ms",
+          "inter_arrival_time_ms",
+          "jitter_ms",
+          "periodicity_score",
+          "domain_entropy",
+          "ngram_score",
+          "query_length"
+        ],
+        "metrics": {
+          "precision": 0.9882,
+          "recall": 1.0,
+          "f1_score": 0.994,
+          "false_positive_rate": 0.0046,
+          "accuracy": 0.9967,
+          "tp": 167.0,
+          "fp": 2.0,
+          "tn": 431.0,
+          "fn": 0.0
+        },
+        "parameters": {
+          "train_ratio": 0.7,
+          "anomaly_percentile": 98.0
+        },
+        "artifact_path": "ml\\registry\\model_v1.0.0.json"
+      }
+    }
+  },
+  "latest_version": "v1.0.0"
+}

@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-abyss: #0B1220;
+    --bg-panel: #131B2E;
+    --bg-panel-raised: #1B2540;
+    --accent-signal: #3FC7D4;
+    --accent-warn: #FF8A3D;
+    --accent-critical: #FF4757;
+    --accent-confirmed: #4CAF7D;
+    --text-primary: #E7ECF5;
+    --text-muted: #8A95AA;
+  }
+
+  body {
+    background-color: var(--bg-abyss);
+    color: var(--text-primary);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* Typography helpers */
+  .font-display {
+    font-family: 'Space Grotesk', sans-serif;
+  }
+  .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .font-body {
+    font-family: 'Inter', sans-serif;
+  }
+
+  /* Mission Control Glass Panels */
+  .panel-abyss {
+    background-color: #0B1220;
+  }
+  .panel-base {
+    background-color: rgba(19, 27, 46, 0.85);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(63, 199, 212, 0.12);
+  }
+  .panel-raised {
+    background-color: rgba(27, 37, 64, 0.9);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(63, 199, 212, 0.25);
+  }
+  .panel-critical {
+    background-color: rgba(27, 37, 64, 0.9);
+    border: 1px solid rgba(255, 71, 87, 0.35);
+  }
+  .panel-warn {
+    background-color: rgba(27, 37, 64, 0.9);
+    border: 1px solid rgba(255, 138, 61, 0.35);
+  }
+
+  /* Cold Sonar Glow & Accents */
+  .glow-signal {
+    box-shadow: 0 0 15px rgba(63, 199, 212, 0.25);
+  }
+  .glow-critical {
+    box-shadow: 0 0 20px rgba(255, 71, 87, 0.35);
+  }
+
+  /* Custom Instrument Scrollbar */
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0B1220;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #1B2540;
+    border-radius: 2px;
+    border: 1px solid rgba(63, 199, 212, 0.1);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #3FC7D4;
+  }
+}

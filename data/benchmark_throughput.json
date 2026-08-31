@@ -1,0 +1,47 @@
+{
+  "benchmark_name": "UDT-X Full-Pipeline Throughput & Latency",
+  "timestamp": "2026-08-29T15:28:11.076024+00:00",
+  "duration_seconds": 4.19,
+  "rates_evaluated": [
+    {
+      "target_flows_per_sec": 10000,
+      "sustained_flows_per_sec": 59778.78,
+      "total_flows_tested": 60000,
+      "latency_median_ms": 0.004,
+      "latency_p95_ms": 0.01,
+      "latency_p99_ms": 0.015,
+      "status": "PASS"
+    },
+    {
+      "target_flows_per_sec": 50000,
+      "sustained_flows_per_sec": 57398.26,
+      "total_flows_tested": 60000,
+      "latency_median_ms": 0.005,
+      "latency_p95_ms": 0.01,
+      "latency_p99_ms": 0.015,
+      "status": "PASS"
+    },
+    {
+      "target_flows_per_sec": 100000,
+      "sustained_flows_per_sec": 55668.23,
+      "total_flows_tested": 60000,
+      "latency_median_ms": 0.004,
+      "latency_p95_ms": 0.01,
+      "latency_p99_ms": 0.019,
+      "status": "PASS"
+    },
+    {
+      "target_flows_per_sec": 125000,
+      "sustained_flows_per_sec": 48514.58,
+      "total_flows_tested": 50000,
+      "latency_median_ms": 0.006,
+      "latency_p95_ms": 0.011,
+      "latency_p99_ms": 0.025,
+      "status": "PASS"
+    }
+  ],
+  "target_sla": {
+    "min_sustained_flows_sec": 100000,
+    "max_p99_latency_ms": 10.0
+  }
+}

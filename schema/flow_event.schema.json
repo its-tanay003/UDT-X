@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://udt-x.org/schemas/flow_event.schema.json",
+  "title": "FlowEvent",
+  "description": "Canonical network flow telemetry event schema for the UDT-X platform.",
+  "type": "object",
+  "required": [
+    "flow_id",
+    "timestamp",
+    "src_ip",
+    "dst_ip",
+    "src_port",
+    "dst_port",
+    "protocol",
+    "direction",
+    "bytes",
+    "packets",
+    "duration_ms",
+    "source",
+    "schema_version"
+  ],
+  "properties": {
+    "flow_id": {
+      "type": "string",
+      "description": "Unique identifier for the network flow.",
+      "minLength": 1
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 UTC timestamp of flow observation or completion."
+    },
+    "src_ip": {
+      "type": "string",
+      "oneOf": [
+        { "format": "ipv4" },
+        { "format": "ipv6" }
+      ],
+      "description": "Source IP address (IPv4 or IPv6)."
+    },
+    "dst_ip": {
+      "type": "string",
+      "oneOf": [
+        { "format": "ipv4" },
+        { "format": "ipv6" }
+      ],
+      "description": "Destination IP address (IPv4 or IPv6)."
+    },
+    "src_port": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 65535,
+      "description": "Source port number (0-65535)."
+    },
+    "dst_port": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 65535,
+      "description": "Destination port number (0-65535)."
+    },
+    "protocol": {
+      "type": "string",
+      "description": "Transport or application protocol name (e.g., TCP, UDP, ICMP, DNS, TLS).",
+      "minLength": 1
+    },
+    "direction": {
+      "type": "string",
+      "enum": ["inbound", "outbound", "internal", "external", "unknown"],
+      "description": "Direction of traffic relative to protected perimeter."
+    },
+    "bytes": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total volume of transferred bytes."
+    },
+    "packets": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total count of transferred packets."
+    },
+    "duration_ms": {
+      "type": "number",
+      "minimum": 0.0,
+      "description": "Duration of the flow in milliseconds."
+    },
+    "dns": {
+      "type": "object",
+      "description": "Optional DNS deep packet inspection metadata.",
+      "properties": {
+        "query": {
+          "type": "string",
+          "description": "Queried domain name."
+        },
+        "qtype": {
+          "type": ["string", "integer"],
+          "description": "DNS record type queried (e.g., 'A', 'AAAA', 'TXT', 1, 28)."
+        },
+        "entropy": {
+          "type": "number",
+          "minimum": 0.0,
+          "description": "Shannon entropy score of the query string (useful for DGA detection)."
+        }
+      },
+      "additionalProperties": true
+    },
+    "tls": {
+      "type": "object",
+      "description": "Optional TLS deep packet inspection metadata.",
+      "properties": {
+        "ja3": {
+          "type": "string",
+          "description": "Client JA3 TLS fingerprint hash."
+        },
+        "ja3s": {
+          "type": "string",
+          "description": "Server JA3S TLS fingerprint hash."
+        },
+        "sni": {
+          "type": "string",
+          "description": "Server Name Indication hostname."
+        },
+        "cipher": {
+          "type": ["string", "integer"],
+          "description": "Negotiated TLS cipher suite."
+        },
+        "packet_size_sequence": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          },
+          "description": "Sequence of packet payload sizes for encrypted traffic analysis."
+        }
+      },
+      "additionalProperties": true
+    },
+    "source": {
+      "type": "string",
+      "enum": ["pcap", "netflow", "ipfix", "sflow", "zeek", "suricata"],
+      "description": "Originating telemetry sensor or collector engine."
+    },
+    "schema_version": {
+      "type": "string",
+      "default": "1.0.0",
+      "description": "Semantic version of the FlowEvent schema."
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,404 @@
+{
+  "$defs": {
+    "DNSFeatures": {
+      "additionalProperties": true,
+      "description": "DNS metadata, query entropy, and n-gram anomaly scores.",
+      "properties": {
+        "query": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "DNS queried domain.",
+          "title": "Query"
+        },
+        "query_length": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Character length of query.",
+          "title": "Query Length"
+        },
+        "domain_entropy": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Shannon entropy score of domain.",
+          "title": "Domain Entropy"
+        },
+        "ngram_score": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "N-gram anomaly probability score.",
+          "title": "Ngram Score"
+        },
+        "dns_query_frequency_window": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "DNS queries from host in window.",
+          "title": "Dns Query Frequency Window"
+        }
+      },
+      "title": "DNSFeatures",
+      "type": "object"
+    },
+    "DirectionalFeatures": {
+      "additionalProperties": true,
+      "description": "Traffic asymmetry and directional flow metrics.",
+      "properties": {
+        "direction": {
+          "$ref": "#/$defs/FlowDirection",
+          "default": "unknown",
+          "description": "Traffic direction."
+        },
+        "outbound_bytes_window": {
+          "default": 0,
+          "description": "Outbound byte volume in window.",
+          "minimum": 0,
+          "title": "Outbound Bytes Window",
+          "type": "integer"
+        },
+        "inbound_bytes_window": {
+          "default": 0,
+          "description": "Inbound byte volume in window.",
+          "minimum": 0,
+          "title": "Inbound Bytes Window",
+          "type": "integer"
+        },
+        "byte_ratio_out_in": {
+          "default": 1.0,
+          "description": "Ratio of outbound to inbound bytes.",
+          "minimum": 0.0,
+          "title": "Byte Ratio Out In",
+          "type": "number"
+        },
+        "packet_ratio_out_in": {
+          "default": 1.0,
+          "description": "Ratio of outbound to inbound packets.",
+          "minimum": 0.0,
+          "title": "Packet Ratio Out In",
+          "type": "number"
+        }
+      },
+      "title": "DirectionalFeatures",
+      "type": "object"
+    },
+    "FlowDirection": {
+      "description": "Direction of network traffic relative to the monitored boundary.",
+      "enum": [
+        "inbound",
+        "outbound",
+        "internal",
+        "external",
+        "unknown"
+      ],
+      "title": "FlowDirection",
+      "type": "string"
+    },
+    "NetworkFeatures": {
+      "additionalProperties": true,
+      "description": "Network volume, throughput, and distribution features.",
+      "properties": {
+        "packets_per_sec": {
+          "default": 0.0,
+          "description": "Packet rate per second.",
+          "minimum": 0.0,
+          "title": "Packets Per Sec",
+          "type": "number"
+        },
+        "bytes_per_sec": {
+          "default": 0.0,
+          "description": "Byte throughput rate per second.",
+          "minimum": 0.0,
+          "title": "Bytes Per Sec",
+          "type": "number"
+        },
+        "packet_size_mean": {
+          "default": 0.0,
+          "description": "Mean packet size in bytes.",
+          "minimum": 0.0,
+          "title": "Packet Size Mean",
+          "type": "number"
+        },
+        "packet_size_stddev": {
+          "default": 0.0,
+          "description": "Standard deviation of packet sizes.",
+          "minimum": 0.0,
+          "title": "Packet Size Stddev",
+          "type": "number"
+        },
+        "window_flow_count": {
+          "default": 1,
+          "description": "Flow count for host in sliding window.",
+          "minimum": 0,
+          "title": "Window Flow Count",
+          "type": "integer"
+        },
+        "window_unique_dst_ips": {
+          "default": 1,
+          "description": "Unique destination IPs in sliding window.",
+          "minimum": 0,
+          "title": "Window Unique Dst Ips",
+          "type": "integer"
+        },
+        "window_unique_dst_ports": {
+          "default": 1,
+          "description": "Unique destination ports in sliding window.",
+          "minimum": 0,
+          "title": "Window Unique Dst Ports",
+          "type": "integer"
+        }
+      },
+      "title": "NetworkFeatures",
+      "type": "object"
+    },
+    "TLSFeatures": {
+      "additionalProperties": true,
+      "description": "TLS/QUIC handshake metadata and packet dynamics without payload decryption.",
+      "properties": {
+        "ja3": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Client JA3 fingerprint.",
+          "title": "Ja3"
+        },
+        "ja3s": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Server JA3S fingerprint.",
+          "title": "Ja3S"
+        },
+        "sni": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Server Name Indication.",
+          "title": "Sni"
+        },
+        "cipher": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Negotiated cipher suite.",
+          "title": "Cipher"
+        },
+        "packet_size_sequence": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Packet size distribution sequence.",
+          "title": "Packet Size Sequence"
+        },
+        "handshake_duration_ms": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "TLS handshake duration in ms.",
+          "title": "Handshake Duration Ms"
+        }
+      },
+      "title": "TLSFeatures",
+      "type": "object"
+    },
+    "TemporalFeatures": {
+      "additionalProperties": true,
+      "description": "Timing, inter-arrival time (IAT), jitter, and autocorrelation metrics.",
+      "properties": {
+        "duration_ms": {
+          "default": 0.0,
+          "description": "Flow duration in ms.",
+          "minimum": 0.0,
+          "title": "Duration Ms",
+          "type": "number"
+        },
+        "inter_arrival_time_ms": {
+          "default": 0.0,
+          "description": "Time since preceding flow from host.",
+          "minimum": 0.0,
+          "title": "Inter Arrival Time Ms",
+          "type": "number"
+        },
+        "jitter_ms": {
+          "default": 0.0,
+          "description": "Variance in inter-arrival times.",
+          "minimum": 0.0,
+          "title": "Jitter Ms",
+          "type": "number"
+        },
+        "periodicity_score": {
+          "default": 0.0,
+          "description": "Autocorrelation-based periodicity regularity score (0.0 to 1.0).",
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Periodicity Score",
+          "type": "number"
+        }
+      },
+      "title": "TemporalFeatures",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Calculated FeatureVector per flow with sliding time-window context.",
+  "properties": {
+    "flow_id": {
+      "description": "Associated Flow ID.",
+      "minLength": 1,
+      "title": "Flow Id",
+      "type": "string"
+    },
+    "timestamp": {
+      "description": "Timestamp of feature extraction.",
+      "format": "date-time",
+      "title": "Timestamp",
+      "type": "string"
+    },
+    "src_ip": {
+      "description": "Source IPv4/IPv6 address.",
+      "title": "Src Ip",
+      "type": "string"
+    },
+    "dst_ip": {
+      "description": "Destination IPv4/IPv6 address.",
+      "title": "Dst Ip",
+      "type": "string"
+    },
+    "protocol": {
+      "description": "Protocol name.",
+      "minLength": 1,
+      "title": "Protocol",
+      "type": "string"
+    },
+    "network": {
+      "$ref": "#/$defs/NetworkFeatures",
+      "description": "Network throughput features."
+    },
+    "directional": {
+      "$ref": "#/$defs/DirectionalFeatures",
+      "description": "Directional traffic features."
+    },
+    "temporal": {
+      "$ref": "#/$defs/TemporalFeatures",
+      "description": "Temporal & periodicity features."
+    },
+    "dns": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DNSFeatures"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "DNS metadata features."
+    },
+    "tls": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/TLSFeatures"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "TLS/QUIC metadata features."
+    },
+    "schema_version": {
+      "default": "1.0.0",
+      "description": "Semantic schema version.",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "flow_id",
+    "src_ip",
+    "dst_ip",
+    "protocol"
+  ],
+  "title": "FeatureVector",
+  "type": "object"
+}

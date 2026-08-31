@@ -1,0 +1,34 @@
+{
+  "198.51.100.77": {
+    "indicator": "198.51.100.77",
+    "type": "ipv4",
+    "threat_actor": "APT29 / Cozy Bear",
+    "feed": "Internal C2 Feed",
+    "confidence": 0.95,
+    "description": "Known Cobalt Strike Team Server"
+  },
+  "203.0.113.88": {
+    "indicator": "203.0.113.88",
+    "type": "ipv4",
+    "threat_actor": "Lazarus Group",
+    "feed": "Exfiltration Dropzone Feed",
+    "confidence": 0.98,
+    "description": "Known Data Exfiltration Drop Endpoint"
+  },
+  "185.220.101.5": {
+    "indicator": "185.220.101.5",
+    "type": "ipv4",
+    "threat_actor": "Tor Exit Node",
+    "feed": "Anonymization Feed",
+    "confidence": 0.90,
+    "description": "Active Tor Exit Router"
+  },
+  "evil-c2-tunnel.biz": {
+    "indicator": "evil-c2-tunnel.biz",
+    "type": "domain",
+    "threat_actor": "FIN7",
+    "feed": "DGA / Tunnel Feed",
+    "confidence": 0.92,
+    "description": "Active DNS Tunneling Infrastructure"
+  }
+}

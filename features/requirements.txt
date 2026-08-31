@@ -1,0 +1,4 @@
+pydantic>=2.7.0
+kafka-python-ng>=2.2.3
+redis>=5.0.0
+numpy>=1.26.0

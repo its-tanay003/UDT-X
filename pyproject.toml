@@ -1,0 +1,29 @@
+[project]
+name = "udt-x"
+version = "0.1.0"
+description = "UDT-X: Unified Defense & Telemetry Platform"
+authors = [{ name = "UDT-X Team" }]
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.7.0",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+]
+ignore = []
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests", "services/api/tests"]
+pythonpath = [".", "services/api"]

@@ -1,0 +1,154 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://udt-x.org/schemas/alert.schema.json",
+  "title": "Alert",
+  "description": "Security incident and anomaly alert schema per UDT-X Section 11 specification.",
+  "type": "object",
+  "required": [
+    "alert_id",
+    "timestamp",
+    "flow_id",
+    "src_ip",
+    "dst_ip",
+    "protocol",
+    "threat_class",
+    "severity",
+    "confidence",
+    "risk_score",
+    "evidence",
+    "mitre",
+    "schema_version"
+  ],
+  "properties": {
+    "alert_id": {
+      "type": "string",
+      "description": "Unique identifier for the alert incident.",
+      "minLength": 1
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 UTC timestamp when the alert was triggered."
+    },
+    "flow_id": {
+      "type": ["string", "null"],
+      "description": "Associated FlowEvent ID (or null if correlated across multiple flows)."
+    },
+    "src_ip": {
+      "type": "string",
+      "oneOf": [
+        { "format": "ipv4" },
+        { "format": "ipv6" }
+      ],
+      "description": "Source IP address associated with the threat."
+    },
+    "dst_ip": {
+      "type": "string",
+      "oneOf": [
+        { "format": "ipv4" },
+        { "format": "ipv6" }
+      ],
+      "description": "Destination / Target IP address associated with the threat."
+    },
+    "protocol": {
+      "type": "string",
+      "description": "Network protocol used in the malicious or anomalous communication.",
+      "minLength": 1
+    },
+    "threat_class": {
+      "type": "string",
+      "description": "Categorization of threat (e.g., c2_beaconing, dns_tunneling, data_exfiltration, port_scan, lateral_movement, ddos).",
+      "minLength": 1
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["info", "low", "medium", "high", "critical"],
+      "description": "Severity rating of the detected threat."
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Statistical or model confidence score (0.0 to 1.0)."
+    },
+    "risk_score": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 100.0,
+      "description": "Computed composite risk score (0.0 to 100.0)."
+    },
+    "evidence": {
+      "type": "array",
+      "description": "Structured forensic evidence artifacts supporting the alert.",
+      "items": {
+        "type": "object",
+        "required": ["key", "value"],
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Feature or metric name (e.g. entropy, periodicity_score, packet_size_stddev, ja3_reputation)."
+          },
+          "value": {
+            "description": "Observed evidence value (primitive or structured)."
+          },
+          "threshold": {
+            "description": "Expected or baseline threshold that was violated."
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable interpretation of this evidence piece."
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "mitre": {
+      "type": "array",
+      "description": "Mapped MITRE ATT&CK tactics, techniques, and procedures (TTPs).",
+      "items": {
+        "type": "object",
+        "required": ["technique_id", "technique_name"],
+        "properties": {
+          "tactic": {
+            "type": "string",
+            "description": "MITRE ATT&CK tactic (e.g., Command and Control, Exfiltration, Discovery)."
+          },
+          "technique_id": {
+            "type": "string",
+            "description": "MITRE technique identifier (e.g., T1071.004, T1041, T1046)."
+          },
+          "technique_name": {
+            "type": "string",
+            "description": "MITRE technique name (e.g., DNS Tunneling, Exfiltration Over C2 Channel)."
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Reference URL to the MITRE ATT&CK matrix."
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "title": {
+      "type": "string",
+      "description": "Concise human-readable title for the alert."
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed explanation of the observed anomaly or threat pattern."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["open", "investigating", "resolved", "dismissed", "false_positive"],
+      "default": "open",
+      "description": "Lifecycle status of the incident."
+    },
+    "schema_version": {
+      "type": "string",
+      "default": "1.0.0",
+      "description": "Semantic version of the Alert schema."
+    }
+  },
+  "additionalProperties": false
+}
