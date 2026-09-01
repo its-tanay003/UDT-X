@@ -127,4 +127,4 @@ ws.onmessage = (event) => {
 ---
 
 ## 📜 License
-Distributed under the MIT License. See [LICENSE](LICENSE) for more information.
+Distributed under the **Apache License, Version 2.0** with full commercial warranty & enterprise SLA enablement. See [LICENSE](LICENSE) and [TERMS_AND_CONDITIONS.md](TERMS_AND_CONDITIONS.md) for details.
