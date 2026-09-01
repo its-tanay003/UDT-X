@@ -11,4 +11,7 @@ def test_health_check() -> None:
     """Verify that /health returns HTTP 200 and status ok."""
     response = client.get("/health")
     assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
+    data = response.json()
+    assert data["status"] == "ok"
+    assert data["service"] == "udtx-api"
+    assert "version" in data
