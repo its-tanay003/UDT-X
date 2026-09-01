@@ -30,6 +30,7 @@ import { ProfilePage } from "./pages/Profile";
 import { SettingsPage } from "./pages/Settings";
 import { BootSequence } from "./components/BootSequence";
 import { TourGuide } from "./components/TourGuide";
+import { ExperiencePrompt } from "./components/ExperiencePrompt";
 
 const ConsoleRail: React.FC = () => {
   const { isConnected, isConnecting } = useLiveStore();
@@ -174,6 +175,7 @@ export const App: React.FC = () => {
   const { user, isThrottled, throttleSeconds } = useAuthStore();
   const { connectWebSocket } = useLiveStore();
   const [isBooting, setIsBooting] = useState(false);
+  const [showExperiencePrompt, setShowExperiencePrompt] = useState(false);
 
   useEffect(() => {
     // Open authenticated WebSocket with JWT token
@@ -188,12 +190,36 @@ export const App: React.FC = () => {
 
   // If user is not authenticated, render Login Page
   if (!user) {
-    return <LoginPage onSuccess={() => setIsBooting(true)} />;
+    return (
+      <LoginPage
+        onSuccess={() => {
+          setIsBooting(true);
+        }}
+      />
+    );
   }
 
   // If boot sequence is active on login, render BootSequence
   if (isBooting) {
-    return <BootSequence onComplete={() => setIsBooting(false)} />;
+    return (
+      <BootSequence
+        onComplete={() => {
+          setIsBooting(false);
+          setShowExperiencePrompt(true);
+        }}
+      />
+    );
+  }
+
+  // If user has not yet cleared experience gate, render ExperiencePrompt
+  if (showExperiencePrompt) {
+    return (
+      <ExperiencePrompt
+        onComplete={() => {
+          setShowExperiencePrompt(false);
+        }}
+      />
+    );
   }
 
   return (
