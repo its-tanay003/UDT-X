@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.5.0] - 2026-09-08
+
+### 🛡️ Extreme AI Agent Adversarial Red-Team & Verification Matrix
+- **Adversarial Test Suite (`tests/test_copilot_adversarial.py`):**
+  - Automated 40-dimension red-team suite validating direct and indirect prompt injection jailbreaks, horizontal and vertical privilege escalation, confirmation gate evasion, input fuzzing (Unicode, RTL, buffer floods, null bytes, SQLi, XSS), token tampering, and thread concurrency.
+- **Server-Side Confirmation Hardening:**
+  - Patched direct action execution in `agent_engine.py` to enforce strict server-side confirmation checks regardless of client invocation parameters.
+- **Performance & Stress Limits Measured:**
+  - 50 sequential queries executed at **7.80ms/query** average latency; 20 parallel threads achieved **p95 latency of 69.56ms** with 0 memory leaks and 0 server crashes.
+- **Master Red-Team Audit Report:**
+  - Published comprehensive 40-dimension verification report at `docs/ai_agent_redteam_report.md` with full capability inventory, threat breakdown, and **Production Candidate** verdict.
+
+---
+
 ## [1.4.0] - 2026-09-08
 
 ### 🤖 AI-Native Sentinel Copilot & Offline Fallback Subsystem

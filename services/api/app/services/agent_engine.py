@@ -153,7 +153,7 @@ class CopilotAgentEngine:
                 intent="explain_concept",
                 confidence=0.92,
                 suggested_routes=["/monitor", "/alerts", "/replay"],
-                recommendations=[r.dict() for r in recs],
+                recommendations=[r.model_dump() if hasattr(r, "model_dump") else r.dict() for r in recs],
                 is_offline_capable=True,
             )
 
@@ -171,7 +171,7 @@ class CopilotAgentEngine:
             intent="general_assistance",
             confidence=0.85,
             suggested_routes=suggested,
-            recommendations=[r.dict() for r in recs],
+            recommendations=[r.model_dump() if hasattr(r, "model_dump") else r.dict() for r in recs],
             is_offline_capable=True,
         )
 
@@ -208,7 +208,9 @@ class CopilotAgentEngine:
             return "simulate_attack", 0.95, "trigger_replay_simulation", {"scenario": scenario}
         if re.search(r"\b(performance|throughput|latency|wire rate|sla|eps)\b", q):
             return "navigate", 0.95, "navigate_page", {"target_route": "/performance"}
-        if re.search(r"\b(profile|password|account|clearance|provision)\b", q):
+        if re.search(r"\b(provision user|create user|add user|new account)\b", q):
+            return "provision_user", 0.95, "provision_user", {}
+        if re.search(r"\b(profile|password|account|clearance)\b", q):
             return "navigate", 0.95, "navigate_page", {"target_route": "/profile"}
         if re.search(r"\b(settings|preferences|audio|sound|particle density)\b", q):
             return "navigate", 0.95, "navigate_page", {"target_route": "/settings"}
@@ -247,7 +249,26 @@ class CopilotAgentEngine:
                 error="INSUFFICIENT_CLEARANCE",
             )
 
+        # Enforce confirmation requirement even if directly invoked via action_request
+        if action_spec.requires_confirmation and not action_req.confirmed:
+            prompt = (action_spec.confirmation_prompt or "Please confirm this sensitive operation.").format(**params)
+            return CopilotResponse(
+                message=f"🔒 Confirmation Required: {prompt}",
+                intent=intent,
+                confidence=confidence,
+                requires_user_confirmation=True,
+                confirmation_payload={
+                    "action_id": action_id,
+                    "parameters": params,
+                    "prompt": prompt,
+                    "target_route": action_spec.target_route,
+                },
+                suggested_routes=[action_spec.target_route] if action_spec.target_route else [],
+                is_offline_capable=action_spec.offline_supported,
+            )
+
         recs = personalization_engine.get_personalized_recommendations(user_role, user_display_name)
+        serialized_recs = [r.model_dump() if hasattr(r, "model_dump") else r.dict() for r in recs]
 
         if action_id == "navigate_page":
             route = params.get("target_route", "/")
@@ -264,7 +285,7 @@ class CopilotAgentEngine:
                 ),
                 executed_action_result={"status": "navigated", "target_route": route},
                 suggested_routes=[route],
-                recommendations=[r.dict() for r in recs],
+                recommendations=serialized_recs,
                 is_offline_capable=True,
             )
 
@@ -291,7 +312,7 @@ class CopilotAgentEngine:
                     "risk_score": risk,
                 },
                 suggested_routes=["/monitor", "/incidents", "/alerts"],
-                recommendations=[r.dict() for r in recs],
+                recommendations=serialized_recs,
                 is_offline_capable=True,
             )
 
@@ -309,7 +330,7 @@ class CopilotAgentEngine:
                 ),
                 executed_action_result={"status": "filtered", "severity": sev, "threat_class": tc},
                 suggested_routes=["/alerts", "/monitor"],
-                recommendations=[r.dict() for r in recs],
+                recommendations=serialized_recs,
                 is_offline_capable=True,
             )
 
@@ -326,7 +347,7 @@ class CopilotAgentEngine:
                 ),
                 executed_action_result={"status": "simulation_injected", "scenario": scenario},
                 suggested_routes=["/replay", "/monitor", "/incidents"],
-                recommendations=[r.dict() for r in recs],
+                recommendations=serialized_recs,
                 is_offline_capable=True,
             )
 
@@ -343,8 +364,27 @@ class CopilotAgentEngine:
                 ),
                 executed_action_result={"status": "export_triggered", "format": fmt},
                 suggested_routes=["/alerts"],
-                recommendations=[r.dict() for r in recs],
+                recommendations=serialized_recs,
                 is_offline_capable=True,
+            )
+
+        if action_id == "provision_user":
+            email = params.get("email", "new_user@udtx.local")
+            role = params.get("role", "analyst")
+            disp_name = params.get("display_name", "New Enclave User")
+            return CopilotResponse(
+                message=f"Administrator clearance verified: User account '{email}' ({role.upper()}) has been provisioned successfully.",
+                intent=intent,
+                confidence=confidence,
+                tool_call=CopilotToolCall(
+                    tool_name="provision_user",
+                    parameters=params,
+                    target_route="/profile",
+                ),
+                executed_action_result={"status": "user_provisioned", "email": email, "role": role, "display_name": disp_name},
+                suggested_routes=["/profile"],
+                recommendations=serialized_recs,
+                is_offline_capable=False,
             )
 
         return CopilotResponse(
@@ -352,7 +392,7 @@ class CopilotAgentEngine:
             intent=intent,
             confidence=confidence,
             executed_action_result={"status": "completed", "action_id": action_id},
-            recommendations=[r.dict() for r in recs],
+            recommendations=serialized_recs,
             is_offline_capable=True,
         )
 

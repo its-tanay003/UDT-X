@@ -44,11 +44,14 @@ async def get_capabilities(
     """Retrieve the full website capability graph and action registry."""
     # Filter actions based on role clearance
     available_actions = {
-        k: v.dict()
+        k: (v.model_dump() if hasattr(v, "model_dump") else v.dict())
         for k, v in ACTION_REGISTRY.items()
         if v.required_role == "analyst" or current_user.role == "admin"
     }
-    available_routes = {k: v.dict() for k, v in ROUTE_REGISTRY.items()}
+    available_routes = {
+        k: (v.model_dump() if hasattr(v, "model_dump") else v.dict())
+        for k, v in ROUTE_REGISTRY.items()
+    }
 
     return {
         "routes": available_routes,
@@ -67,4 +70,4 @@ async def get_recommendations(
         user_role=current_user.role,
         user_display_name=current_user.display_name,
     )
-    return [r.dict() for r in recs]
+    return [r.model_dump() if hasattr(r, "model_dump") else r.dict() for r in recs]
