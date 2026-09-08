@@ -1,7 +1,7 @@
 # 🏗️ UDT-X Platform: Technical Architecture Document (Phase 14)
 
 **Platform:** Unified Dynamic Threat Identification and Defense Platform (UDT-X)  
-**Version:** 1.0.0 Enterprise  
+**Version:** 1.1.0 Enterprise  
 **Target Submission:** Smart India Hackathon (SIH)  
 **Authors:** UDT-X Engineering Team  
 
@@ -72,11 +72,11 @@ flowchart TD
 
 ### 2.3 Heuristic & Machine Learning Detection Engines (Phases 3, 4, 5, 7)
 - **Engines:**
-  1. `ReconEngine`: Probing sequentiality, fan-out rates, and SYN-scan ratio triggers.
-  2. `DDoSEngine`: Volumetric rate spikes and source-entropy collapse detection.
-  3. `DgaDnsTunnelEngine`: High-entropy subdomains, consonant ratios, and base32/hex query tracking.
-  4. `EncryptedSessionEngine`: Malicious JA3/JA3S fingerprint matching and byte entropy distribution anomalies.
-  5. `ExfiltrationEngine`: Destination novelty tracking and volume threshold spikes.
+  1. `ReconEngine`: Probing sequentiality, fan-out rates, and SYN-scan ratio triggers (`T1046`).
+  2. `DDoSEngine`: Volumetric rate spikes and source-entropy collapse detection (`T1498.001`).
+  3. `DgaDnsTunnelEngine`: High-entropy subdomains, consonant ratios, and base32/hex query tracking (`T1568.002`, `T1071.004`).
+  4. `EncryptedSessionEngine`: Malicious JA3/JA3S fingerprint matching and byte entropy distribution anomalies (`T1573.002`).
+  5. `ExfiltrationEngine`: Destination novelty tracking and volume threshold spikes (`T1048`).
   6. `ML Inference Worker`: ONNX runtime executing LightGBM/XGBoost multi-class models with TreeSHAP local feature explanations.
 
 ### 2.4 Behavioral Baseline Engine (Phase 6)
@@ -91,8 +91,20 @@ flowchart TD
 
 ### 2.7 Storage, REST API & React SOC Dashboard (Phases 10, 11, 12)
 - **Storage:** TimescaleDB hypertables for time-series flow events and alerts.
-- **Backend:** FastAPI service exposing REST routes (`/alerts`, `/incidents`, `/graph`, `/performance`, `/replay`) and `/ws/live` WebSockets.
-- **Frontend:** React 19 + TypeScript + Vite + Tailwind dashboard with 8 dedicated screens including Security Overview, Live Monitor, Threat Center, Incident Dossier, Evidence Explorer, Network Graph, Performance Telemetry, and the Replay Lab.
+- **Backend:** FastAPI service exposing REST routes (`/alerts`, `/incidents`, `/graph`, `/performance`, `/replay`, `/settings`, `/auth`) and `/ws/live` WebSockets with JWT token authentication and SlowAPI rate limiting.
+- **Frontend Consoles:** React 19 + TypeScript + Vite + Tailwind dashboard with 12 mission-control screens:
+  1. `/` — Security Command Center (Ambient 3D Listening Sphere & Risk Posture Dial)
+  2. `/monitor` — Live Ingestion & Telemetry Monitor (0-refresh stream with class & severity filters)
+  3. `/incidents` — Incidents Dossier Index (Sortable by risk, recency, and alert count)
+  4. `/incidents/:id` — Incident Detail (Chronological kill-chain progression & node topology)
+  5. `/alerts` — Alerts & Evidence Explorer Index (Filterable feed with 1-click CEF/Syslog export)
+  6. `/alerts/:id/evidence` — Evidence Explorer (TreeSHAP feature waterfall & heuristic meters)
+  7. `/graph` — Network Evidence Graph (3D Hemisphere Tap & 2D Entity Topology)
+  8. `/threats` — Threat Intelligence Center (D3 Sonar Sweep Matrix & breakdown)
+  9. `/replay` — Deterministic Replay Lab (Hardware safety-guarded attack injectors)
+  10. `/performance` — Performance Telemetry (Sub-millisecond latency & wire rate throughput)
+  11. `/profile` — Operator Profile (Clearance levels & user provisioning)
+  12. `/settings` — Station Settings (Alert thresholds & notification parameters)
 
 ---
 
@@ -104,6 +116,6 @@ flowchart TD
 | **Message Streaming** | Redpanda (Kafka-compatible), Redis 7 Alpine |
 | **Databases** | TimescaleDB (PostgreSQL 16), Neo4j 5 Enterprise Graph |
 | **ML & Explainability** | LightGBM, ONNX Runtime, TreeSHAP, Scikit-learn |
-| **Backend & APIs** | FastAPI, Uvicorn, AsyncPG, WebSockets, Pytest |
-| **Frontend Dashboard** | React 19, TypeScript, Vite, Tailwind CSS v4, Cytoscape.js, Recharts, Lucide Icons |
+| **Backend & APIs** | FastAPI, Uvicorn (wsproto), AsyncPG, SlowAPI, WebSockets, Pytest |
+| **Frontend Dashboard** | React 19, TypeScript, Vite, Tailwind CSS v4, Three.js / R3F, D3.js, Recharts, Lucide Icons |
 | **Testing & Emulation** | Pytest, Pytest-Asyncio, Ruff, Custom Replay Lab Scenarios |

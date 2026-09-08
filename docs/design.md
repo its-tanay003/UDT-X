@@ -86,7 +86,7 @@ Custom radial visualization in **D3.js** for the Threat Center:
 ### 4.3 Left Console Rail (`App.tsx`)
 - Persistent tactical sidebar navigation.
 - Live Data Diode status indicator displaying connection state (`ONLINE` / `LISTENING`).
-- Instant keyboard navigable tabs across all 8 analyst screens.
+- Instant keyboard navigable tabs across all 12 analyst console screens.
 
 ---
 
@@ -96,28 +96,38 @@ Custom radial visualization in **D3.js** for the Threat Center:
 graph TD
     Rail[Tactical Console Rail Nav] --> O[1. Security Overview /]
     Rail --> M[2. Live Monitor /monitor]
-    Rail --> I[3. Incident Dossier /incidents/:id]
-    Rail --> E[4. Evidence Explorer /alerts/:id/evidence]
-    Rail --> G[5. Network Graph /graph]
-    Rail --> T[6. Threat Center /threats]
-    Rail --> R[7. Replay Lab /replay]
-    Rail --> P[8. Performance /performance]
+    Rail --> AL[3. Alerts Feed /alerts]
+    Rail --> IC[4. Incidents Index /incidents]
+    Rail --> I[5. Incident Dossier /incidents/:id]
+    Rail --> E[6. Evidence Explorer /alerts/:id/evidence]
+    Rail --> G[7. Network Graph /graph]
+    Rail --> T[8. Threat Center /threats]
+    Rail --> R[9. Replay Lab /replay]
+    Rail --> P[10. Performance /performance]
+    Rail --> PR[11. Analyst Profile /profile]
+    Rail --> S[12. System Settings /settings]
 
     O -.->|Inspect Anomaly| M
-    M -.->|Drilldown Alert| E
-    M -.->|Open Incident| I
+    M -.->|Inspect Anomaly Feed| AL
+    AL -.->|Drilldown Alert Evidence| E
+    AL -.->|Correlate Incident| IC
+    IC -.->|Open Incident Dossier| I
     I -.->|View Topology| G
     R -.->|Simulate APT Chain| O
 ```
 
-1. **Security Overview:** Real-time throughput gauge (124,850 EPS), 4 KPI cards, ambient Listening Sphere, dynamic SVG composite risk posture ring (0-100), and 7-engine cluster status.
-2. **Live Monitor:** Filterable telemetry feed (by Threat Class, Severity, IP) with zero-refresh WebSocket updates.
-3. **Incident Dossier:** Chronological multi-stage attack timeline, MITRE technique tags, and "Why These Were Grouped" correlation reasoning.
-4. **Evidence Explorer:** Labeled mathematical evidence meters and signed **TreeSHAP local feature attribution** waterfalls.
-5. **Network Graph:** Full-screen interactive 3D Listening Sphere with Cytoscape.js topology inspection.
-6. **Threat Center:** Custom D3 Radial Sonar Sweep breakdown and time-range analytics (1h, 24h, 7d, 30d).
-7. **Replay Lab:** Physical hardware-style toggle switches and trigger controls for live SIH demonstration presets.
-8. **Performance:** Recharts throughput area charts, latency percentile trackers (P99 / Median), and container resource metrics.
+1. **Security Overview (`/`):** Real-time throughput gauge (124,850 EPS), 4 KPI cards with contextual tooltips, ambient Listening Sphere, dynamic SVG composite risk posture ring (0-100), and 7-engine cluster status.
+2. **Live Monitor (`/monitor`):** Filterable telemetry feed (by Threat Class, Severity, IP) with zero-refresh WebSocket updates and empty state filters.
+3. **Alerts Index (`/alerts`):** Comprehensive searchable anomaly index with severity/class filter chips and 1-click SIEM export (CEF / Syslog RFC 5424).
+4. **Incidents Index (`/incidents`):** Correlated multi-stage attack list with risk score badges, stage breakdowns, and direct deep links to full dossiers.
+5. **Incident Dossier (`/incidents/:id`):** Chronological multi-stage attack timeline, MITRE technique tags, and "Why These Were Grouped" correlation reasoning.
+6. **Evidence Explorer (`/alerts/:id/evidence`):** Labeled mathematical evidence meters and signed **TreeSHAP local feature attribution** waterfalls with interactive score breakdowns.
+7. **Network Graph (`/graph`):** Full-screen interactive 3D Listening Sphere with Cytoscape.js topology inspection.
+8. **Threat Center (`/threats`):** Custom D3 Radial Sonar Sweep breakdown and time-range analytics (1h, 24h, 7d, 30d).
+9. **Replay Lab (`/replay`):** Physical hardware-style toggle switches and trigger controls for live SIH demonstration presets.
+10. **Performance (`/performance`):** Recharts throughput area charts, latency percentile trackers (P99 / Median), and container resource metrics.
+11. **Analyst Profile (`/profile`):** Current authenticated user details, assigned SOC role & clearances, session metadata, and active JWT token expiration timer.
+12. **System Settings (`/settings`):** Configurable detection thresholds, rate limit overrides, notification routing, and audit logs.
 
 ---
 

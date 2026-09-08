@@ -1,14 +1,21 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import {
+  Activity,
   AlertTriangle,
+  Play,
+  Pause,
   Filter,
-  Flame,
-  Radio,
   Search,
-  ShieldAlert,
+  Zap,
+  Radio,
+  Clock,
+  Flame,
 } from "lucide-react";
 import { useLiveStore } from "../lib/store";
+import { EmptyState } from "../components/EmptyState";
+import { Tooltip } from "../components/Tooltip";
 import type { Severity, ThreatClass } from "../types/soc";
 
 export const LiveMonitorPage: React.FC = () => {
@@ -19,7 +26,7 @@ export const LiveMonitorPage: React.FC = () => {
 
   const filteredAlerts = alerts.filter((a) => {
     if (filterClass !== "ALL" && a.threat_class !== filterClass) return false;
-    if (filterSeverity !== "ALL" && a.severity !== filterSeverity) return false;
+    if (filterSeverity !== "ALL" && a.severity.toLowerCase() !== filterSeverity.toLowerCase()) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       return (
@@ -50,6 +57,9 @@ export const LiveMonitorPage: React.FC = () => {
           <h1 className="text-2xl font-display font-bold text-[#E7ECF5] mt-1 tracking-tight">
             Live Telemetry & Alert Monitor
           </h1>
+          <p className="text-xs text-[#8A95AA] mt-0.5">
+            Continuous zero-latency inspection stream of inbound network flows and detected anomalies.
+          </p>
         </div>
 
         <div className="flex items-center gap-2 font-mono text-xs text-[#8A95AA]">
@@ -75,8 +85,9 @@ export const LiveMonitorPage: React.FC = () => {
               <option value="DDOS">DDOS</option>
               <option value="C2_BEACONING">C2 BEACONING</option>
               <option value="RECONNAISSANCE">RECONNAISSANCE</option>
-              <option value="DGA_OR_TUNNEL">DGA / TUNNEL</option>
-              <option value="TLS_ANOMALY">TLS ANOMALY</option>
+              <option value="DGA">DGA</option>
+              <option value="DNS_TUNNELING">DNS TUNNELING</option>
+              <option value="ENCRYPTED_ANOMALY">ENCRYPTED ANOMALY</option>
               <option value="EXFILTRATION">EXFILTRATION</option>
             </select>
           </div>
@@ -91,10 +102,10 @@ export const LiveMonitorPage: React.FC = () => {
               className="bg-[#0B1220] border border-[#3FC7D4]/20 rounded px-2.5 py-1 text-xs text-[#E7ECF5] focus:outline-none focus:border-[#3FC7D4]"
             >
               <option value="ALL">ALL SEVERITIES</option>
-              <option value="CRITICAL">CRITICAL</option>
-              <option value="HIGH">HIGH</option>
-              <option value="MEDIUM">MEDIUM</option>
-              <option value="LOW">LOW</option>
+              <option value="critical">CRITICAL</option>
+              <option value="high">HIGH</option>
+              <option value="medium">MEDIUM</option>
+              <option value="low">LOW</option>
             </select>
           </div>
         </div>
@@ -104,7 +115,7 @@ export const LiveMonitorPage: React.FC = () => {
           <Search className="w-3.5 h-3.5 text-[#8A95AA] absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search IP, flow, hash..."
+            placeholder="Search IP, flow, ID..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-[#0B1220] border border-[#3FC7D4]/20 rounded-lg pl-9 pr-3 py-1.5 text-xs font-mono text-[#E7ECF5] placeholder-[#8A95AA] focus:outline-none focus:border-[#3FC7D4]"
@@ -112,34 +123,129 @@ export const LiveMonitorPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Stream Table */}
-      <div id="tour-live-table" className="rounded-xl bg-[#131B2E] border border-[#3FC7D4]/15 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left font-mono text-xs">
-            <thead className="bg-[#0B1220] border-b border-[#3FC7D4]/15 text-[#8A95AA]">
-              <tr>
-                <th className="py-3 px-4">TIMESTAMP</th>
-                <th className="py-3 px-4">SEVERITY</th>
-                <th className="py-3 px-4">THREAT CLASS</th>
-                <th className="py-3 px-4">SOURCE HOST</th>
-                <th className="py-3 px-4">DESTINATION HOST</th>
-                <th className="py-3 px-4">RISK</th>
-                <th className="py-3 px-4 text-right">ACTION</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#3FC7D4]/10 text-[#E7ECF5]">
-              {filteredAlerts.length > 0 ? (
-                filteredAlerts.map((alt) => {
+      {/* Stream Table or Empty State */}
+      {filteredAlerts.length === 0 ? (
+        <EmptyState
+          icon={Radio}
+          title={alerts.length === 0 ? "AWAITING INBOUND TELEMETRY STREAM" : "NO ALERTS MATCHING ACTIVE FILTERS"}
+          description={
+            alerts.length === 0
+              ? "The WebSocket pipeline is active and listening for mirrored packet flows. To populate live telemetry right now, run an attack scenario in the Replay Lab."
+              : "No live alerts match your current filter criteria. Try resetting the class or severity filters."
+          }
+          actionLabel={alerts.length === 0 ? "LAUNCH REPLAY LAB →" : "RESET FILTERS"}
+          actionTo={alerts.length === 0 ? "/replay" : undefined}
+          onAction={alerts.length > 0 ? () => { setSearchQuery(""); setFilterClass("ALL"); setFilterSeverity("ALL"); } : undefined}
+          secondaryActionLabel="VIEW INCIDENTS DOSSIER"
+          secondaryActionTo="/incidents"
+          variant={alerts.length === 0 ? "signal" : "default"}
+        />
+      ) : (
+        <div id="tour-live-table" className="rounded-xl bg-[#131B2E] border border-[#3FC7D4]/15 overflow-hidden">
+          {/* Mobile Stacked Card View (Hidden on md+) */}
+          <div className="md:hidden divide-y divide-[#3FC7D4]/10">
+            {filteredAlerts.map((alt, index) => {
+              const sevColor =
+                alt.severity === "critical"
+                  ? "#FF4757"
+                  : alt.severity === "high"
+                  ? "#FF8A3D"
+                  : alt.severity === "medium"
+                  ? "#EAB308"
+                  : "#4CAF7D";
+
+              return (
+                <motion.div
+                  key={alt.alert_id}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25, delay: Math.min(index * 0.03, 0.45) }}
+                  className="p-4 space-y-3 font-mono text-xs hover:bg-[#1B2540]/40 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-[#E7ECF5]">{alt.alert_id}</span>
+                    <span
+                      className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider"
+                      style={{
+                        backgroundColor: `${sevColor}20`,
+                        color: sevColor,
+                        border: `1px solid ${sevColor}50`,
+                      }}
+                    >
+                      {alt.severity}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-[#3FC7D4] font-semibold">{alt.threat_class}</span>
+                    <span className="font-bold" style={{ color: sevColor }}>
+                      RISK {alt.risk_score.toFixed(1)}
+                    </span>
+                  </div>
+
+                  <div className="text-[11px] text-[#8A95AA] flex flex-col gap-1 bg-[#0B1220] p-2.5 rounded border border-[#3FC7D4]/10">
+                    <div className="flex justify-between">
+                      <span>SRC:</span>
+                      <span className="text-[#E7ECF5]">{alt.src_ip}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>DST:</span>
+                      <span className="text-[#8A95AA]">{alt.dst_ip}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-[10px] text-[#8A95AA]">
+                      {new Date(alt.timestamp).toLocaleTimeString()}
+                    </span>
+                    <Link
+                      to={`/alerts/${alt.alert_id}/evidence`}
+                      className="text-xs text-[#3FC7D4] hover:underline font-bold inline-flex items-center gap-1 active:scale-[0.97] transition-all"
+                    >
+                      <span>INSPECT EVIDENCE</span>
+                      <span>→</span>
+                    </Link>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+
+          {/* Desktop/Tablet Table View (Hidden on mobile) */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-left font-mono text-xs">
+              <thead className="bg-[#0B1220] border-b border-[#3FC7D4]/15 text-[#8A95AA] uppercase text-[10px] tracking-wider select-none">
+                <tr>
+                  <th className="py-3 px-4">TIMESTAMP</th>
+                  <th className="py-3 px-4">SEVERITY</th>
+                  <th className="py-3 px-4">THREAT CLASS</th>
+                  <th className="py-3 px-4">SOURCE HOST</th>
+                  <th className="py-3 px-4">DESTINATION HOST</th>
+                  <th className="py-3 px-4">
+                    <Tooltip content="Composite hazard score based on baseline deviation and confidence" code="RISK">
+                      <span className="cursor-help border-b border-dashed border-[#8A95AA]">RISK</span>
+                    </Tooltip>
+                  </th>
+                  <th className="py-3 px-4 text-right">ACTION</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#3FC7D4]/10 text-[#E7ECF5]">
+                {filteredAlerts.map((alt, index) => {
                   const sevColor =
                     alt.severity === "critical"
                       ? "#FF4757"
                       : alt.severity === "high"
                       ? "#FF8A3D"
-                      : "#3FC7D4";
+                      : alt.severity === "medium"
+                      ? "#EAB308"
+                      : "#4CAF7D";
 
                   return (
-                    <tr
+                    <motion.tr
                       key={alt.alert_id}
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.2, delay: Math.min(index * 0.03, 0.4) }}
                       className="hover:bg-[#1B2540]/50 transition-colors group"
                     >
                       <td className="py-3 px-4 text-[#8A95AA]">
@@ -158,35 +264,32 @@ export const LiveMonitorPage: React.FC = () => {
                         </span>
                       </td>
                       <td className="py-3 px-4 font-bold text-[#E7ECF5]">
-                        {alt.threat_class}
+                        <Tooltip content={`Threat category: ${alt.threat_class}`}>
+                          <span className="cursor-help">{alt.threat_class}</span>
+                        </Tooltip>
                       </td>
                       <td className="py-3 px-4">{alt.src_ip}</td>
                       <td className="py-3 px-4 text-[#8A95AA]">{alt.dst_ip}</td>
                       <td className="py-3 px-4 font-bold" style={{ color: sevColor }}>
-                        {alt.risk_score}
+                        {alt.risk_score.toFixed(1)}
                       </td>
                       <td className="py-3 px-4 text-right">
                         <Link
                           to={`/alerts/${alt.alert_id}/evidence`}
-                          className="text-[11px] text-[#3FC7D4] hover:underline"
+                          className="text-[#3FC7D4] hover:underline font-bold inline-flex items-center gap-1 active:scale-[0.97] transition-all"
                         >
-                          EVIDENCE →
+                          <span>INSPECT</span>
+                          <span>→</span>
                         </Link>
                       </td>
-                    </tr>
+                    </motion.tr>
                   );
-                })
-              ) : (
-                <tr>
-                  <td colSpan={7} className="py-8 text-center text-[#8A95AA]">
-                    No alerts matching active filter parameters.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

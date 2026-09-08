@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useLiveStore } from "../lib/store";
 import { triggerReplayScenario } from "../lib/api/threats";
+import { Tooltip } from "../components/Tooltip";
 
 interface ReplayLabProps {
   onBack?: () => void;
@@ -129,7 +130,7 @@ export const ReplayLabPage: React.FC<ReplayLabProps> = ({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between pb-4 border-b border-[#3FC7D4]/15">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between pb-4 border-b border-[#3FC7D4]/15 gap-4">
         <div className="flex items-center gap-4">
           {onBack && (
             <button
@@ -147,19 +148,27 @@ export const ReplayLabPage: React.FC<ReplayLabProps> = ({
               </span>
             </div>
             <h1 className="text-2xl font-display font-bold text-[#E7ECF5] mt-1 tracking-tight">
-              Replay Lab // Mission Control Instrument Console
+              Deterministic Replay Lab
             </h1>
+            <p className="text-xs text-[#8A95AA] mt-0.5">
+              Deterministic attack scenario generator for testing detection engines in an isolated sandbox.
+            </p>
           </div>
         </div>
 
         <div className="flex items-center gap-3 font-mono text-xs">
-          <span className="px-3 py-1 rounded bg-[#131B2E] border border-[#3FC7D4]/20 text-[#3FC7D4] font-bold">
-            SAFE INTERFACE GUARD: ACTIVE
-          </span>
+          <Tooltip
+            title="Safe Interface Guard"
+            content="Hardware data diode policy prevents attack packets from ever routing into live production interfaces."
+          >
+            <span className="px-3 py-1 rounded bg-[#131B2E] border border-[#3FC7D4]/20 text-[#3FC7D4] font-bold cursor-help">
+              SAFE INTERFACE GUARD: ACTIVE
+            </span>
+          </Tooltip>
         </div>
       </div>
 
-      {/* Grid: 5 Physical Hardware-Style Switch Cards */}
+      {/* Grid: 5 Hardware-Style Switch Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Left: 5 Simulation Control Cards */}
         <div id="tour-replay-console" className="lg:col-span-8 space-y-4">
@@ -179,61 +188,76 @@ export const ReplayLabPage: React.FC<ReplayLabProps> = ({
               return (
                 <div
                   key={sc.id}
-                  className="p-5 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/15 hover:border-[#3FC7D4]/35 transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+                  className={`p-5 rounded-xl border transition-all ${
+                    isRunning
+                      ? "bg-[#1B2540] border-[#FF4757] shadow-[0_0_20px_rgba(255,71,87,0.2)]"
+                      : isArmed
+                      ? "bg-[#131B2E] border-[#3FC7D4]/30"
+                      : "bg-[#0B1220]/70 border-[#3FC7D4]/10 opacity-75"
+                  }`}
                 >
-                  <div className="flex items-start gap-4">
-                    <div className="p-3 rounded-lg bg-[#0B1220] border border-[#3FC7D4]/20 text-[#3FC7D4]">
-                      <Icon className="w-5 h-5" />
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex items-start gap-3.5">
+                      <div className="p-3 rounded-lg bg-[#0B1220] border border-[#3FC7D4]/20 text-[#3FC7D4] mt-0.5">
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-display font-bold text-sm text-[#E7ECF5]">
+                            {sc.name}
+                          </h4>
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#0B1220] border border-[#3FC7D4]/20 text-[#8A95AA]">
+                            {sc.category}
+                          </span>
+                        </div>
+                        <p className="text-xs text-[#8A95AA] max-w-xl">
+                          {sc.description}
+                        </p>
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {sc.mitre.map((m) => (
+                            <Tooltip key={m} content={`MITRE ATT&CK: ${m}`} code={m}>
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-[#0B1220] border border-[#3FC7D4]/15 text-[#3FC7D4]">
+                                {m}
+                              </span>
+                            </Tooltip>
+                          ))}
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="text-base font-display font-bold text-[#E7ECF5]">
-                          {sc.name}
-                        </h4>
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#0B1220] text-[#3FC7D4] border border-[#3FC7D4]/20">
-                          {sc.category}
+
+                    {/* Arm Switch & Execute Button */}
+                    <div className="flex items-center gap-3 shrink-0 self-end md:self-center">
+                      <button
+                        type="button"
+                        onClick={() => toggleArm(sc.id)}
+                        className="flex items-center gap-1.5 font-mono text-xs text-[#8A95AA] hover:text-[#E7ECF5] transition-colors"
+                      >
+                        {isArmed ? (
+                          <ToggleRight className="w-6 h-6 text-[#3FC7D4]" />
+                        ) : (
+                          <ToggleLeft className="w-6 h-6 text-[#8A95AA]" />
+                        )}
+                        <span className={isArmed ? "text-[#3FC7D4] font-bold" : ""}>
+                          {isArmed ? "ARMED" : "DISARMED"}
                         </span>
-                      </div>
-                      <p className="text-xs text-[#8A95AA] mt-1 max-w-xl leading-relaxed">
-                        {sc.description}
-                      </p>
-                      <div className="mt-2.5 flex items-center gap-3 text-[10px] font-mono text-[#8A95AA]">
-                        <span>THREATS: <strong className="text-[#E7ECF5]">{sc.threats.join(", ")}</strong></span>
-                        <span>MITRE: <strong className="text-[#3FC7D4]">{sc.mitre.join(", ")}</strong></span>
-                      </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={!isArmed || isRunning}
+                        onClick={() => handleArmAndExecute(sc)}
+                        className={`px-4 py-2 rounded-lg font-mono text-xs font-bold transition-all flex items-center gap-1.5 ${
+                          isRunning
+                            ? "bg-[#FF4757] text-white animate-pulse"
+                            : isArmed
+                            ? "bg-[#FF4757]/20 border border-[#FF4757]/40 text-[#FF4757] hover:bg-[#FF4757]/30 shadow-lg"
+                            : "bg-[#0B1220] border border-[#3FC7D4]/10 text-[#8A95AA] cursor-not-allowed"
+                        }`}
+                      >
+                        <Play className="w-3.5 h-3.5" />
+                        <span>{isRunning ? "INJECTING..." : "DISPATCH"}</span>
+                      </button>
                     </div>
-                  </div>
-
-                  {/* Hardware Switch Controls */}
-                  <div className="flex items-center gap-4 self-end md:self-center">
-                    {/* Toggle Switch */}
-                    <button
-                      onClick={() => toggleArm(sc.id)}
-                      className="flex items-center gap-1.5 text-xs font-mono text-[#8A95AA] hover:text-[#E7ECF5]"
-                    >
-                      {isArmed ? (
-                        <ToggleRight className="w-7 h-7 text-[#3FC7D4]" />
-                      ) : (
-                        <ToggleLeft className="w-7 h-7 text-[#8A95AA]" />
-                      )}
-                      <span className="text-[10px]">{isArmed ? "ARMED" : "SAFE"}</span>
-                    </button>
-
-                    {/* Engage Trigger Button */}
-                    <button
-                      disabled={!isArmed || isRunning}
-                      onClick={() => handleArmAndExecute(sc)}
-                      className={`px-4 py-2 rounded-lg font-mono text-xs font-bold transition-all flex items-center gap-2 ${
-                        isRunning
-                          ? "bg-[#FF4757] text-white animate-pulse"
-                          : isArmed
-                          ? "bg-[#3FC7D4] text-[#0B1220] hover:bg-[#3FC7D4]/90 shadow-[0_0_15px_rgba(63,199,212,0.25)]"
-                          : "bg-[#1B2540] text-[#8A95AA] cursor-not-allowed"
-                      }`}
-                    >
-                      <Play className="w-3.5 h-3.5 fill-current" />
-                      {isRunning ? "TRANSMITTING..." : "ENGAGE"}
-                    </button>
                   </div>
                 </div>
               );
@@ -241,29 +265,31 @@ export const ReplayLabPage: React.FC<ReplayLabProps> = ({
           </div>
         </div>
 
-        {/* Right: Live Wire Console Stream */}
-        <div className="lg:col-span-4 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/20 p-5 space-y-4 flex flex-col justify-between">
-          <div>
-            <h3 className="text-xs font-mono font-bold text-[#8A95AA] uppercase tracking-wider mb-3">
-              Station Wire Log (Real-Time)
-            </h3>
-            <div className="p-4 rounded-lg bg-[#0B1220] border border-[#3FC7D4]/15 font-mono text-xs text-[#3FC7D4] space-y-2 min-h-[300px] overflow-y-auto">
-              <div className="text-[#8A95AA] text-[10px] pb-2 border-b border-[#3FC7D4]/10">
-                [SYSTEM READY] Listening for simulation dispatch triggers...
-              </div>
-              {statusLog.map((log, idx) => (
-                <div key={idx} className="text-[11px] leading-relaxed">
-                  {log}
-                </div>
-              ))}
+        {/* Right: Telemetry & Ingestion Console Output */}
+        <div className="lg:col-span-4 space-y-4">
+          <div className="p-5 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/20 space-y-3 font-mono">
+            <div className="flex items-center justify-between text-xs text-[#8A95AA]">
+              <span>REPLAY DISPATCH LOG</span>
+              <span className="text-[#3FC7D4] animate-pulse">● LIVE</span>
             </div>
-          </div>
 
-          <div className="p-3 rounded-lg bg-[#0B1220] border border-[#3FC7D4]/15 font-mono text-[11px] text-[#8A95AA]">
-            <span>EMITTED TELEMETRY:</span>
-            <div className="mt-1 flex items-center justify-between text-[#E7ECF5] font-bold">
-              <span>{alerts.length} ALERTS ACTIVE</span>
-              <span className="text-[#3FC7D4]">{incidents.length} INCIDENTS</span>
+            <div className="p-3.5 rounded-lg bg-[#0B1220] border border-[#3FC7D4]/15 h-64 overflow-y-auto text-[11px] space-y-1.5 text-[#8A95AA]">
+              {statusLog.length > 0 ? (
+                statusLog.map((log, idx) => (
+                  <div key={idx} className="text-[#E7ECF5] leading-relaxed">
+                    {log}
+                  </div>
+                ))
+              ) : (
+                <div className="text-[#8A95AA] italic">
+                  No replay dispatches logged yet. Arm and trigger a scenario to inject packets into the passive tap.
+                </div>
+              )}
+            </div>
+
+            <div className="pt-2 text-[10px] text-[#8A95AA] space-y-1">
+              <div>Telemetry Buffer: <strong className="text-[#3FC7D4]">{alerts.length} alerts</strong></div>
+              <div>Active Incidents: <strong className="text-[#FF8A3D]">{incidents.length} correlated</strong></div>
             </div>
           </div>
         </div>

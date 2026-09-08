@@ -7,6 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.0] - 2026-09-08
+
+### 🎨 Motion & Micro-Interaction Overhaul
+- **Dynamic Physics KPI Counter Animations:** Created `AnimatedNumber.tsx` with Framer Motion `useSpring` and `useTransform` with automatic numeric flash updates on live telemetry changes.
+- **Route-Transition Motion:** Wrapped `App.tsx` router view in `AnimatePresence mode="wait"` with subtle vertical translation and fade transitions.
+- **Staggered Table & List Cascades:** Added 30ms offset fade-in animations across `Alerts.tsx`, `Incidents.tsx`, and `LiveMonitor.tsx` for desktop tables and mobile stacked cards.
+- **Interactive Micro-Interactions:** Implemented `hover:bg-[#1B2540]`, soft cyan glow borders, and `active:scale-[0.97]` click compressions across all interactive cards, forensic links, and action buttons.
+- **Enhanced 3D Listening Sphere Bloom:** Tuned post-processing bloom parameters (`luminanceThreshold: 0.25`, `intensity: 1.2`, `mipmapBlur`) for clear visibility at normal viewing distance.
+
+---
+
+## [1.2.0] - 2026-09-08
+
+### 📱 Responsive & Mobile-First Overhaul
+- **Collapsible Console Rail Navigation:**
+  - Below `md` viewport, primary sidebar navigation collapses to an icon-only rail with on-hover tooltips.
+  - Added full mobile drawer mode with hamburger menu button toggle and backdrop overlay.
+- **Adaptive KPI & Metric Reflow:**
+  - `Overview.tsx` & `Performance.tsx`: Metric and KPI cards systematically reflow from 4-column desktop down to 2-column tablet, and 1-column mobile.
+- **Dynamic 3D Canvas Resizing:**
+  - `ListeningSphere.tsx`: Implemented container-aware `ResizeObserver` and Three.js canvas auto-resizing. Automatically steps down particle density on narrow screens while honoring the server-persisted user display settings.
+- **Adaptive D3 Radial Sonar:**
+  - `SonarRadialChart.tsx`: Added `ResizeObserver` listener with dynamic radius and coordinate recalculation for tablet and mobile containers.
+- **Mobile Stacked Cards for Data Tables:**
+  - `LiveMonitor.tsx` and `Alerts.tsx`: Responsive table views that switch to stacked forensic cards on viewports `< md`, eliminating horizontal scrolling on smaller laptop displays.
+- **Responsive Auth & Bootstrap Views:**
+  - `Login.tsx` and `BootSequence.tsx`: Centered responsive container scaling guaranteed down to 1024px minimum resolution and up to 4K ultra-wide displays.
+- **Responsive Tour Guide:**
+  - `TourGuide.tsx`: Adaptive spotlight tracking and floating panel bounding on mobile, tablet, and widescreen.
+
+---
+
+## [1.1.0] - 2026-09-08
+
+### 🚀 Added & Improved
+- **Navigation & Discoverability Redesign:**
+  - Built `pages/Incidents.tsx` (`/incidents`): Real-time index of correlated multi-stage incidents with multi-factor sorting (Risk, Recency, Alert count), search, and direct links to dossiers.
+  - Built `pages/Alerts.tsx` (`/alerts`): Anomaly feed index with threat class and severity filters, search, direct evidence links, and 1-click SIEM export (CEF and RFC 5424 Syslog).
+  - Updated primary navigation rail in `App.tsx` to point to `/incidents` and `/alerts` index screens while preserving deep links (`/incidents/:id` and `/alerts/:id/evidence`).
+- **Reusable UX Components:**
+  - `EmptyState`: Reusable on-theme empty/filtered panel component with actionable guidance (used across Incidents, Alerts, Live Monitor, Incident Detail, and Evidence Explorer).
+  - `Tooltip`: On-theme floating popover with glassmorphism backdrop (`bg-[#1B2540]`, border `#3FC7D4/30`) explaining technical metrics (EPS, P99, TreeSHAP, MITRE ATT&CK IDs, JA3, Risk calculation).
+- **Plain-Language Page Subtitles:** Added clear, functional subtitles across all 12 SOC consoles.
+- **Enterprise Licensing:** Upgraded to Apache 2.0 with Enterprise Warranty & SLA addendum (`TERMS_AND_CONDITIONS.md`).
+- **Test Suite Health:** All 111 pytest unit & integration tests passing with 100% success rate.
+
+---
+
 ## [1.0.0] - 2026-08-31
 
 ### 🚀 Added

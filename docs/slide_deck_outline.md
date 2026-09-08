@@ -27,7 +27,7 @@
 - **Redpanda Stream Backbone:** Microservice event streaming with Redis sliding windows.
 - **Multi-Engine Detection Matrix:** Heuristics + 7-Day Rolling Gaussian Baselines + ONNX ML Inference.
 - **Neo4j Evidence Graph:** Temporal entity-relationship correlation.
-- **SOC Analyst Cockpit:** 8-screen React 19 + TypeScript real-time dashboard.
+- **SOC Analyst Cockpit:** 12-screen React 19 + TypeScript real-time dashboard (Security Overview, Live Monitor, Alerts Feed, Incidents Index, Incident Dossier, Evidence Explorer, Network Graph, Threat Center, Replay Lab, Performance, Profile, Settings).
 
 ---
 

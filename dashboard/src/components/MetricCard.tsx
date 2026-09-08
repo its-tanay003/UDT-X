@@ -1,5 +1,6 @@
 import React from "react";
 import type { LucideIcon } from "lucide-react";
+import { Tooltip } from "./Tooltip";
 
 interface MetricCardProps {
   title: string;
@@ -8,6 +9,8 @@ interface MetricCardProps {
   icon: LucideIcon;
   color: "cyan" | "rose" | "amber" | "emerald" | "violet";
   trend?: string;
+  tooltip?: string;
+  tooltipCode?: string;
 }
 
 export const MetricCard: React.FC<MetricCardProps> = ({
@@ -17,6 +20,8 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   icon: Icon,
   color,
   trend,
+  tooltip,
+  tooltipCode,
 }) => {
   const colorMap = {
     cyan: {
@@ -58,9 +63,9 @@ export const MetricCard: React.FC<MetricCardProps> = ({
 
   const scheme = colorMap[color];
 
-  return (
+  const cardContent = (
     <div
-      className={`group relative overflow-hidden p-6 rounded-2xl bg-gradient-to-br ${scheme.bg} border ${scheme.border} backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl ${scheme.glow}`}
+      className={`group relative overflow-hidden p-6 rounded-2xl bg-gradient-to-br ${scheme.bg} border ${scheme.border} backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl ${scheme.glow} w-full`}
     >
       <div className="flex items-center justify-between">
         <div>
@@ -88,4 +93,14 @@ export const MetricCard: React.FC<MetricCardProps> = ({
       </div>
     </div>
   );
+
+  if (tooltip) {
+    return (
+      <Tooltip content={tooltip} title={title} code={tooltipCode} position="top" className="w-full">
+        {cardContent}
+      </Tooltip>
+    );
+  }
+
+  return cardContent;
 };

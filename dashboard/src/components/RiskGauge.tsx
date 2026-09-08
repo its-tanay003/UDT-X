@@ -1,4 +1,5 @@
 import React from "react";
+import { Tooltip } from "./Tooltip";
 
 interface RiskGaugeProps {
   score: number;
@@ -39,10 +40,17 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({ score }) => {
   return (
     <div className="flex flex-col items-center justify-center p-6 bg-slate-900/90 border border-slate-800/80 rounded-2xl backdrop-blur-xl shadow-2xl relative overflow-hidden">
       <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
-      <div className="text-xs font-semibold tracking-wider text-slate-400 uppercase mb-3 flex items-center gap-2">
-        <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-        Global Risk Posture
-      </div>
+      <Tooltip
+        title="Enclave Risk Posture"
+        code="SCORE (0-100)"
+        content="Weighted composite index computed from real-time anomaly confidence, baseline z-score deviation, and active kill-chain stage severity."
+        position="bottom"
+      >
+        <div className="text-xs font-semibold tracking-wider text-slate-400 uppercase mb-3 flex items-center gap-2 cursor-help">
+          <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+          Global Risk Posture
+        </div>
+      </Tooltip>
 
       <div className="relative w-48 h-28 flex items-center justify-center">
         <svg className="w-48 h-48 transform -rotate-180" viewBox="0 0 180 180">
@@ -88,20 +96,26 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({ score }) => {
       </div>
 
       {/* Posture Badge */}
-      <div
-        className="mt-2 px-3 py-1 rounded-full text-xs font-bold tracking-wide flex items-center gap-1.5 border"
-        style={{
-          backgroundColor: statusBg,
-          color: statusColor,
-          borderColor: `${statusColor}40`,
-        }}
+      <Tooltip
+        title="Severity Level"
+        content="Classification posture: <35 Nominal, 35-60 Elevated, 60-80 High Alert, >80 Critical Threat."
+        position="top"
       >
-        <span
-          className="w-1.5 h-1.5 rounded-full"
-          style={{ backgroundColor: statusColor }}
-        />
-        {statusText}
-      </div>
+        <div
+          className="mt-2 px-3 py-1 rounded-full text-xs font-bold tracking-wide flex items-center gap-1.5 border cursor-help"
+          style={{
+            backgroundColor: statusBg,
+            color: statusColor,
+            borderColor: `${statusColor}40`,
+          }}
+        >
+          <span
+            className="w-1.5 h-1.5 rounded-full"
+            style={{ backgroundColor: statusColor }}
+          />
+          {statusText}
+        </div>
+      </Tooltip>
     </div>
   );
 };

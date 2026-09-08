@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import type { ThreatStatItem } from "../lib/api/threats";
 
@@ -14,14 +14,31 @@ export const SonarRadialChart: React.FC<SonarRadialChartProps> = ({
   data,
   selectedClass,
   onSelectClass,
-  width = 380,
-  height = 380,
+  width: initialWidth = 380,
+  height: initialHeight = 380,
 }) => {
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const [dimensions, setDimensions] = useState({ width: initialWidth, height: initialHeight });
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const measured = Math.min(entry.contentRect.width, 420);
+        if (measured > 180) {
+          setDimensions({ width: measured, height: measured });
+        }
+      }
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!svgRef.current || !data || data.length === 0) return;
 
+    const { width, height } = dimensions;
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
 
@@ -115,15 +132,15 @@ export const SonarRadialChart: React.FC<SonarRadialChartProps> = ({
       .attr("fill", "#3FC7D4")
       .attr("stroke", "#0B1220")
       .attr("stroke-width", 2);
-  }, [data, selectedClass, width, height, onSelectClass]);
+  }, [data, selectedClass, dimensions, onSelectClass]);
 
   return (
-    <div className="flex flex-col items-center justify-center p-4">
+    <div ref={containerRef} className="w-full flex flex-col items-center justify-center p-2 sm:p-4 overflow-hidden">
       <svg
         ref={svgRef}
-        width={width}
-        height={height}
-        className="overflow-visible"
+        width={dimensions.width}
+        height={dimensions.height}
+        className="overflow-visible max-w-full"
       />
     </div>
   );

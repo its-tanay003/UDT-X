@@ -1,9 +1,10 @@
-import React, { useRef, useMemo } from "react";
+import React, { useRef, useMemo, useState, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, Sphere } from "@react-three/drei";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import * as THREE from "three";
 import type { GraphNode, GraphEdge } from "../lib/api/graph";
+import { useAuthStore } from "../lib/auth";
 
 interface ListeningSphereProps {
   nodes?: GraphNode[];
@@ -263,28 +264,52 @@ export const ListeningSphere: React.FC<ListeningSphereProps> = ({
   nodes = [],
   edges = [],
   interactive = false,
-  density = "high",
+  density,
   height = "320px",
   onNodeClick,
 }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const userDensity = useAuthStore((s) => s.settings?.display?.sphere_particle_density);
+  const [isNarrow, setIsNarrow] = useState(false);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setIsNarrow(entry.contentRect.width < 500);
+      }
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  // Compute effective density (user settings > prop > narrow screen step down)
+  const effectiveDensity: "low" | "high" = useMemo(() => {
+    if (userDensity === "off") return "low";
+    if (userDensity === "low" || isNarrow) return "low";
+    if (density) return density;
+    return "high";
+  }, [userDensity, density, isNarrow]);
+
   const prefersReducedMotion =
     typeof window !== "undefined" &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  if (prefersReducedMotion) {
+  if (prefersReducedMotion || userDensity === "off") {
     return (
       <div
+        ref={containerRef}
         className="w-full flex flex-col items-center justify-center bg-[#0B1220] border border-[#3FC7D4]/20 rounded-xl p-6 relative overflow-hidden"
         style={{ height }}
       >
-        <div className="w-32 h-32 rounded-full border-2 border-dashed border-[#3FC7D4]/40 flex items-center justify-center relative">
+        <div className="w-28 sm:w-32 h-28 sm:h-32 rounded-full border-2 border-dashed border-[#3FC7D4]/40 flex items-center justify-center relative">
           <div className="w-4 h-4 rounded-full bg-[#3FC7D4] shadow-[0_0_12px_#3FC7D4]" />
           {nodes.some((n) => n.severity === "critical" || (n.risk && n.risk > 85)) && (
             <div className="absolute top-2 right-4 w-3 h-3 rounded-full bg-[#FF4757] animate-ping" />
           )}
         </div>
-        <p className="text-xs font-mono text-[#8A95AA] mt-4 uppercase tracking-wider">
-          Passive Listening Perimeter (Static Accessible View)
+        <p className="text-xs font-mono text-[#8A95AA] mt-4 uppercase tracking-wider text-center">
+          Passive Listening Perimeter (Static 2D Mode)
         </p>
       </div>
     );
@@ -294,6 +319,7 @@ export const ListeningSphere: React.FC<ListeningSphereProps> = ({
 
   return (
     <div
+      ref={containerRef}
       className="w-full relative rounded-xl overflow-hidden border border-[#3FC7D4]/15 bg-[#0B1220]"
       style={{ height }}
     >
@@ -308,7 +334,10 @@ export const ListeningSphere: React.FC<ListeningSphereProps> = ({
         </div>
       )}
 
-      <Canvas camera={{ position: [0, 0, 4.3], fov: 45 }}>
+      <Canvas
+        resize={{ scroll: false, debounce: { scroll: 50, resize: 0 } }}
+        camera={{ position: [0, 0, 4.3], fov: 45 }}
+      >
         <ambientLight intensity={0.4} />
         {/* Soft directional & rim lighting for physical depth */}
         <directionalLight position={[5, 8, 5]} intensity={0.9} color="#E7ECF5" />
@@ -317,7 +346,7 @@ export const ListeningSphere: React.FC<ListeningSphereProps> = ({
         <SphereScene
           nodes={nodes}
           edges={edges}
-          density={density}
+          density={effectiveDensity}
           onNodeClick={onNodeClick}
         />
 
@@ -344,8 +373,8 @@ export const ListeningSphere: React.FC<ListeningSphereProps> = ({
       {/* Bottom Status Tag */}
       <div className="absolute bottom-2.5 left-3 z-20 pointer-events-none flex items-center gap-2">
         <span className="w-2 h-2 rounded-full bg-[#3FC7D4] animate-pulse" />
-        <span className="text-[10px] font-mono text-[#8A95AA] uppercase tracking-widest">
-          Passive Telemetry Perimeter // Inward Arcs Only ({nodes.length} Nodes / {edges.length} Flows)
+        <span className="text-[10px] font-mono text-[#8A95AA] uppercase tracking-widest truncate">
+          Passive Tap // Inward Arcs ({nodes.length} Nodes / {edges.length} Flows)
         </span>
       </div>
     </div>

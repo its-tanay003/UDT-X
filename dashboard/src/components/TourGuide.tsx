@@ -352,18 +352,18 @@ export const TourGuide: React.FC = () => {
       <div className="absolute inset-0 bg-[#0B1220]/75 backdrop-blur-[2px] pointer-events-auto" />
 
       {/* Floating Comprehensive Tactical Station Guide Panel */}
-      <div className="absolute bottom-6 right-6 w-full max-w-xl p-6 rounded-2xl bg-[#131B2E] border-2 border-[#3FC7D4] shadow-[0_0_50px_rgba(63,199,212,0.3)] space-y-4 pointer-events-auto max-h-[90vh] overflow-y-auto z-50">
+      <div className="fixed sm:absolute bottom-3 sm:bottom-6 right-3 sm:right-6 left-3 sm:left-auto w-auto sm:w-full sm:max-w-xl p-4 sm:p-6 rounded-2xl bg-[#131B2E] border-2 border-[#3FC7D4] shadow-[0_0_50px_rgba(63,199,212,0.3)] space-y-3 sm:space-y-4 pointer-events-auto max-h-[85vh] sm:max-h-[90vh] overflow-y-auto z-50">
         {/* Header Ribbon */}
-        <div className="flex items-center justify-between pb-3 border-b border-[#3FC7D4]/20">
+        <div className="flex items-center justify-between pb-2.5 sm:pb-3 border-b border-[#3FC7D4]/20">
           <div className="flex items-center gap-2 text-xs font-bold text-[#3FC7D4]">
-            <Compass className="w-4 h-4 animate-spin" />
-            <span className="tracking-widest">
-              STATION OPERATIONAL TOUR // STEP {String(tourStepIndex + 1).padStart(2, "0")} / {String(INTERACTIVE_TOUR_STEPS.length).padStart(2, "0")}
+            <Compass className="w-4 h-4 animate-spin shrink-0" />
+            <span className="tracking-wider sm:tracking-widest text-[11px] sm:text-xs truncate">
+              STATION TOUR // STEP {String(tourStepIndex + 1).padStart(2, "0")}/{String(INTERACTIVE_TOUR_STEPS.length).padStart(2, "0")}
             </span>
           </div>
           <button
             onClick={skipTour}
-            className="p-1 rounded text-[#8A95AA] hover:text-[#E7ECF5] hover:bg-[#0B1220] transition-colors"
+            className="p-1 rounded text-[#8A95AA] hover:text-[#E7ECF5] hover:bg-[#0B1220] transition-colors shrink-0"
             title="Dismiss Tour"
           >
             <X className="w-4 h-4" />

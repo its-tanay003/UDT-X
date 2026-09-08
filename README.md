@@ -1,7 +1,7 @@
 # UDT-X: Unified Defense & Telemetry Platform
 
 > **Comprehensive End-to-End Autonomous Network Defense & Telemetry Platform**
-> Built for AI-driven multi-source ingestion, canonical normalisation, real-time feature extraction, multi-class threat detection, behavioral baselines, machine learning anomaly scoring, temporal correlation, MITRE ATT&CK enrichment, dynamic risk scoring, and SIEM/SOC interoperability.
+> Built for AI-driven multi-source ingestion, canonical normalisation, real-time feature extraction, multi-class threat detection, behavioral baselines, machine learning anomaly scoring, temporal graph correlation, MITRE ATT&CK enrichment, dynamic risk scoring, and SIEM/SOC interoperability.
 
 ---
 
@@ -68,6 +68,27 @@ flowchart TD
 
 ---
 
+## 🖥️ Mission-Control SOC Consoles & Responsive Architecture
+
+UDT-X features a React 19 + TypeScript + Vite + Tailwind CSS v4 mission-control cockpit engineered with a strict 1024px responsive floor up to 4K ultra-wide screens. Includes adaptive collapsible rail navigation (drawer overlay on mobile, icon-only on tablet, expanded on desktop), auto-resizing 3D WebGL Listening Sphere, stacked mobile cards for telemetry tables, and rich contextual tooltips:
+
+| Console Route | Page | Purpose & Description |
+|---|---|---|
+| `/` | **Security Command Center** | Real-time situational awareness, global enclave risk posture, ambient 3D Listening Sphere, and passive data diode telemetry. |
+| `/monitor` | **Live Monitor** | Continuous zero-latency inspection stream of inbound network flows and detected anomalies with live filtering. |
+| `/incidents` | **Incidents Dossier** | Comprehensive index of correlated multi-stage security incidents sortable by risk score, time, and member alerts. |
+| `/incidents/:id` | **Incident Detail** | In-depth chronological kill-chain progression, affected asset topology, and containment telemetry for a specific incident. |
+| `/alerts` | **Alerts Explorer** | Scored anomaly log from UDT-X passive detection engines with 1-click SIEM export capability (CEF & RFC 5424 Syslog). |
+| `/alerts/:id/evidence` | **Evidence Explorer** | Mathematical evidence breakdown, heuristic triggers, and signed TreeSHAP feature attributions. |
+| `/graph` | **Network Evidence Graph** | Every host UDT-X can see, and every flow between them — traffic only ever moves inward across passive tap. |
+| `/threats` | **Threat Intelligence Center**| Aggregated threat class intelligence, MITRE ATT&CK matrix mappings, and severity distributions with D3 Sonar Sweep. |
+| `/replay` | **Deterministic Replay Lab** | Deterministic attack scenario generator for testing detection engines in an isolated sandbox with physical safety locks. |
+| `/performance` | **Performance Telemetry** | Sub-millisecond processing telemetry, sustained wire rate throughput (>120k EPS), and compute utilization. |
+| `/profile` | **Operator Profile** | Station operator credentials, clearance level, user provisioning, and session authorization tokens. |
+| `/settings` | **Station Settings** | Alert thresholds, display density preferences, and station telemetry integration parameters. |
+
+---
+
 ## 📦 Subsystems & Delivered Components
 
 | Subsystem | Service Name | Port / Protocol | Core Responsibility |
@@ -76,55 +97,89 @@ flowchart TD
 | **NetFlow Ingestion** | `udtx-netflow-listener` | UDP `2055` / `4739` | High-throughput NetFlow v5/v9 & IPFIX decoding. |
 | **Canonical Normalizer** | `udtx-normalizer` | Kafka Consumer | Schema enforcement, dead-letter routing to `raw-events-dlq`. |
 | **Feature Extractor** | `udtx-features` | Kafka Stream Processor | Shannon entropy, IAT, burst rates, directional ratios. |
-| **DDoS Surge Engine** | `udtx-ddos-engine` | Kafka Stream Processor | Volumetric flood, SYN surge, and protocol anomaly detection. |
-| **Recon Scan Engine** | `udtx-recon-engine` | Kafka Stream Processor | Horizontal/vertical scanning & host sweep detection. |
-| **C2 Beacon Engine** | `udtx-c2-beacon-engine` | Kafka Stream Processor | Autocorrelation, low-jitter periodic beaconing detection. |
-| **DGA & DNS Tunnel** | `udtx-dga-dns-tunnel-engine`| Kafka Stream Processor | N-gram character entropy & base32/hex tunnel query detection. |
-| **Encrypted Session** | `udtx-encrypted-session-engine` | Kafka Stream Processor | JA3 fingerprint matching, TLS cipher suite anomalies. |
-| **Exfiltration Engine**| `udtx-exfiltration-engine` | Kafka Stream Processor | Asymmetric outbound volume spikes & destination novelty tracking. |
-| **Behavioral Baseline** | `udtx-baseline` | Redis + TimescaleDB | 7-day Gaussian baseline models with hour-of-week seasonality. |
-| **ML Inference** | `udtx-ml-inference` | ONNX Runtime | LightGBM/XGBoost classification + TreeSHAP explainability. |
+| **DDoS Surge Engine** | `udtx-ddos-engine` | Kafka Stream Processor | Volumetric flood, SYN surge, and protocol anomaly detection (`T1498.001`). |
+| **Recon Scan Engine** | `udtx-recon-engine` | Kafka Stream Processor | Horizontal/vertical scanning & host sweep detection (`T1046`). |
+| **C2 Beacon Engine** | `udtx-c2-beacon-engine` | Kafka Stream Processor | Autocorrelation, low-jitter periodic beaconing detection (`T1071.004`). |
+| **DGA & DNS Tunnel** | `udtx-dga-dns-tunnel-engine`| Kafka Stream Processor | N-gram character entropy & base32/hex tunnel query detection (`T1568.002`). |
+| **Encrypted Session** | `udtx-encrypted-session-engine` | Kafka Stream Processor | JA3 fingerprint matching, TLS cipher suite anomalies (`T1573.002`). |
+| **Exfiltration Engine**| `udtx-exfiltration-engine` | Kafka Stream Processor | Asymmetric outbound volume spikes & destination novelty tracking (`T1048`). |
+| **Behavioral Baseline** | `udtx-baseline` | Redis + TimescaleDB | 7-day Gaussian baseline models with hour-of-week seasonality ($\mu \pm 3\sigma$). |
+| **ML Inference** | `udtx-ml-inference` | ONNX Runtime | LightGBM/XGBoost classification + TreeSHAP local explainability. |
 | **Graph Correlator** | `udtx-correlation` | Neo4j 5 Graph DB | 30-minute sliding window multi-stage attack chain synthesis. |
 | **Threat Intel** | `udtx-intel` | Local IOC Database | MITRE ATT&CK mapping & technique enrichment. |
-| **Risk Engine & API** | `udtx-api` | HTTP `8000`, `/ws/live` | Dynamic composite risk scoring (0-100), REST endpoints & WebSocket. |
-| **SOC Dashboard** | `udtx-dashboard` | HTTP `3001` | React 19 + TypeScript + 3D Listening Sphere mission-control cockpit. |
+| **Risk Engine & API** | `udtx-api` | HTTP `8000`, `/ws/live` | Dynamic composite risk scoring (0-100), JWT auth, rate limiting, REST & WS. |
+| **SOC Dashboard** | `udtx-dashboard` | HTTP `3001` | React 19 + TypeScript + 3D Listening Sphere + full discovery UX. |
 
 ---
 
 ## 🏃 Quick Start Guide
 
 ### Prerequisites
-- Docker & Docker Compose
 - Python 3.12+ / 3.14 (with virtual environment)
 - Node.js 20+
+- Docker & Docker Compose (optional for standalone infrastructure)
 
-### 1. Launch Platform Infrastructure & Services
+---
+
+### Option A: Local Development (Fast Start)
+
+#### 1. Start the Backend Core API
+From the project root directory:
+```powershell
+cd "C:\New Volume (D)\SIH"
+.venv\Scripts\python -m uvicorn services.api.app.main:app --host 0.0.0.0 --port 8000 --ws wsproto
+```
+
+#### 2. Start the Frontend Dashboard
+In a separate terminal window:
+```powershell
+cd "C:\New Volume (D)\SIH\dashboard"
+npm run dev -- --host 127.0.0.1 --port 3001
+```
+
+#### 3. Log into the Enclave Station
+- Open browser: **`http://127.0.0.1:3001`**
+- **Default Credentials:**
+  - Email: `admin@udtx.local`
+  - Password: `AdminEnclave2026!`
+
+---
+
+### Option B: Full Containerized Stack (Docker Compose)
+
 ```bash
-# Start all services in background
+# Start all 21 microservices in background
 docker compose up -d
 
-# Verify container status
+# Verify container health
 docker compose ps
 ```
 
-### 2. Access SOC & Management Dashboards
-- **UDT-X Mission-Control Dashboard:** [http://localhost:3001](http://localhost:3001)
-- **UDT-X Core API & Swagger Docs:** [http://localhost:8000/docs](http://localhost:8000/docs)
+- **Mission-Control Dashboard:** [http://localhost:3001](http://localhost:3001)
+- **API Swagger & OpenAPI Docs:** [http://localhost:8000/docs](http://localhost:8000/docs)
 - **Redpanda Kafka Web Console:** [http://localhost:8080](http://localhost:8080)
 - **Neo4j Evidence Graph Browser:** [http://localhost:7474](http://localhost:7474) (Auth: `neo4j` / `udtxpassword`)
 - **TimescaleDB PostgreSQL:** `localhost:5432` (`udtx_user` / `udtx_password`)
 
-### 3. Stream Live SOC Events
-Connect to the real-time WebSocket feed:
-```javascript
-const ws = new WebSocket("ws://localhost:8000/ws/live");
-ws.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-    console.log("Live Security Telemetry:", data);
-};
+---
+
+## 🧪 Automated Testing & Verification
+
+Run the comprehensive pytest test suite covering all 14 phases:
+```powershell
+.venv\Scripts\python -m pytest -v
+```
+```text
+======================= 111 passed, 2 warnings in 15.20s =======================
+```
+
+Validate frontend compilation:
+```powershell
+cd dashboard
+npm run build
 ```
 
 ---
 
-## 📜 License
-Distributed under the **Apache License, Version 2.0** with full commercial warranty & enterprise SLA enablement. See [LICENSE](LICENSE) and [TERMS_AND_CONDITIONS.md](TERMS_AND_CONDITIONS.md) for details.
+## 📜 License & Terms
+Distributed under the **Apache License, Version 2.0** with Enterprise Warranty & SLA addendum. See [LICENSE](LICENSE) and [TERMS_AND_CONDITIONS.md](TERMS_AND_CONDITIONS.md) for full licensing terms and conditions.

@@ -27,17 +27,8 @@ export const SettingsPage: React.FC = () => {
     <div className="space-y-6">
       {/* Top Banner */}
       <div className="flex items-center justify-between pb-4 border-b border-[#3FC7D4]/15">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#3FC7D4] animate-pulse" />
-            <span className="text-[11px] font-mono font-bold tracking-widest text-[#3FC7D4] uppercase">
-              Station Telemetry & Interface Preferences
-            </span>
-          </div>
-          <h1 className="text-2xl font-display font-bold text-[#E7ECF5] mt-1 tracking-tight">
-            Station Settings
-          </h1>
-        </div>
+
+
 
         {savedToast && (
           <div className="flex items-center gap-2 font-mono text-xs text-[#4CAF7D] bg-[#4CAF7D]/15 border border-[#4CAF7D]/30 px-3 py-1.5 rounded-lg animate-fade-in">

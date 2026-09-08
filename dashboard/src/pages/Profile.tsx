@@ -141,17 +141,8 @@ export const ProfilePage: React.FC = () => {
     <div className="space-y-6">
       {/* Top Banner */}
       <div className="flex items-center justify-between pb-4 border-b border-[#3FC7D4]/15">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#3FC7D4] animate-pulse" />
-            <span className="text-[11px] font-mono font-bold tracking-widest text-[#3FC7D4] uppercase">
-              Authenticated Station Operator
-            </span>
-          </div>
-          <h1 className="text-2xl font-display font-bold text-[#E7ECF5] mt-1 tracking-tight">
-            Account & Security Profile
-          </h1>
-        </div>
+
+
 
         <button
           onClick={logout}

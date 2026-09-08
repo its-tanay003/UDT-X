@@ -47,13 +47,13 @@ export const BootSequence: React.FC<BootSequenceProps> = ({ onComplete }) => {
   }, [onComplete, prefersReducedMotion]);
 
   return (
-    <div className="w-screen h-screen bg-[#0B1220] flex flex-col items-center justify-center p-6 relative select-none font-mono">
+    <div className="w-screen h-screen bg-[#0B1220] flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 relative select-none font-mono overflow-y-auto">
       {/* Sonar Glow in Background */}
       <div className="absolute w-96 h-96 rounded-full bg-[#3FC7D4]/5 blur-3xl pointer-events-none" />
 
-      <div className="w-full max-w-lg p-8 rounded-2xl bg-[#131B2E] border border-[#3FC7D4]/30 shadow-2xl space-y-6 relative z-10">
+      <div className="w-full max-w-lg my-auto p-6 sm:p-8 rounded-2xl bg-[#131B2E] border border-[#3FC7D4]/30 shadow-2xl space-y-6 relative z-10">
         <div className="flex items-center gap-3 pb-4 border-b border-[#3FC7D4]/15">
-          <div className="w-9 h-9 rounded-lg bg-[#3FC7D4]/20 border border-[#3FC7D4]/50 flex items-center justify-center shadow-[0_0_12px_rgba(63,199,212,0.3)]">
+          <div className="w-9 h-9 rounded-lg bg-[#3FC7D4]/20 border border-[#3FC7D4]/50 flex items-center justify-center shadow-[0_0_12px_rgba(63,199,212,0.3)] shrink-0">
             <Terminal className="w-5 h-5 text-[#3FC7D4]" />
           </div>
           <div>

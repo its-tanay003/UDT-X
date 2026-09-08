@@ -41,11 +41,11 @@ export const LoginPage: React.FC<LoginProps> = ({ onSuccess }) => {
   };
 
   return (
-    <div className="w-screen h-screen bg-[#0B1220] flex items-center justify-center p-6 relative select-none">
+    <div className="w-screen h-screen bg-[#0B1220] flex items-center justify-center p-4 sm:p-6 lg:p-8 relative select-none overflow-y-auto">
       {/* Background Ambience / Grid */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(63,199,212,0.06)_0%,transparent_70%)] pointer-events-none" />
 
-      <div className="w-full max-w-md p-8 rounded-2xl bg-[#131B2E] border border-[#3FC7D4]/25 shadow-2xl relative z-10 space-y-6">
+      <div className="w-full max-w-md my-auto p-6 sm:p-8 rounded-2xl bg-[#131B2E] border border-[#3FC7D4]/25 shadow-2xl relative z-10 space-y-6">
         {/* Header Badge */}
         <div className="text-center space-y-2">
           <div className="w-12 h-12 rounded-xl bg-[#3FC7D4]/15 border border-[#3FC7D4]/40 flex items-center justify-center mx-auto shadow-[0_0_20px_rgba(63,199,212,0.2)]">
@@ -54,7 +54,7 @@ export const LoginPage: React.FC<LoginProps> = ({ onSuccess }) => {
           <div className="text-[10px] font-mono tracking-widest text-[#3FC7D4] uppercase">
             Restricted Enclave Console
           </div>
-          <h1 className="text-2xl font-display font-bold text-[#E7ECF5] tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-display font-bold text-[#E7ECF5] tracking-tight">
             AUTHENTICATE TO STATION
           </h1>
           <p className="text-xs font-mono text-[#8A95AA]">
