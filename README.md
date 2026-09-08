@@ -85,7 +85,9 @@ UDT-X features a React 19 + TypeScript + Vite + Tailwind CSS v4 mission-control 
 | `/replay` | **Deterministic Replay Lab** | Deterministic attack scenario generator for testing detection engines in an isolated sandbox with physical safety locks. |
 | `/performance` | **Performance Telemetry** | Sub-millisecond processing telemetry, sustained wire rate throughput (>120k EPS), and compute utilization. |
 | `/profile` | **Operator Profile** | Station operator credentials, clearance level, user provisioning, and session authorization tokens. |
-| `/settings` | **Station Settings** | Alert thresholds, display density preferences, and station telemetry integration parameters. |
+| `/settings` | **Station Settings** | Alert thresholds, display density preferences, tour controls, and station telemetry integration parameters. |
+
+> 📑 **Full System Audit & Test Report:** See [docs/ui_audit_report.md](file:///c:/New%20Volume%20%28D%29/SIH/docs/ui_audit_report.md) for the complete 10-point feature verification and test pass matrix.
 
 ---
 

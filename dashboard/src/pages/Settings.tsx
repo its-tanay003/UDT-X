@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { Settings, Bell, Monitor, Database, Shield, CheckCircle } from "lucide-react";
+import { Settings, Bell, Monitor, Database, Shield, CheckCircle, Compass, RotateCcw } from "lucide-react";
 import { useAuthStore } from "../lib/auth";
 
 export const SettingsPage: React.FC = () => {
-  const { user, settings, updateSettingsField } = useAuthStore();
+  const { user, settings, updateSettingsField, startTour } = useAuthStore();
   const [stationConfig, setStationConfig] = useState<any>(null);
   const [savedToast, setSavedToast] = useState(false);
 
@@ -26,16 +26,50 @@ export const SettingsPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Top Banner */}
-      <div className="flex items-center justify-between pb-4 border-b border-[#3FC7D4]/15">
-
-
-
-        {savedToast && (
-          <div className="flex items-center gap-2 font-mono text-xs text-[#4CAF7D] bg-[#4CAF7D]/15 border border-[#4CAF7D]/30 px-3 py-1.5 rounded-lg animate-fade-in">
-            <CheckCircle className="w-4 h-4" />
-            <span>PREFERENCES PERSISTED TO STATION DB</span>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#3FC7D4]/15 gap-4">
+        <div>
+          <div className="flex items-center gap-2 font-mono text-xs text-[#3FC7D4]">
+            <Settings className="w-3.5 h-3.5" />
+            <span className="font-bold uppercase tracking-wider">Station Preferences & Node Configuration</span>
           </div>
-        )}
+          <h1 className="text-2xl font-display font-bold text-[#E7ECF5] mt-1 tracking-tight">
+            Station Settings & Diagnostics
+          </h1>
+          <p className="text-xs text-[#8A95AA] mt-0.5">
+            Manage audio alerts, 3D sphere performance, SIEM export defaults, and station tour triggers.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={() => startTour()}
+            className="px-3.5 py-1.5 rounded-lg bg-[#3FC7D4]/15 border border-[#3FC7D4]/30 hover:border-[#3FC7D4] text-[#3FC7D4] text-xs font-mono font-bold transition-all flex items-center gap-1.5 active:scale-[0.97]"
+          >
+            <Compass className="w-3.5 h-3.5" />
+            <span>REPLAY TOUR</span>
+          </button>
+
+          <button
+            onClick={() => {
+              if (user) {
+                localStorage.removeItem(`udtx_onboarding_${user.id}`);
+                localStorage.removeItem(`udtx_briefing_${user.id}`);
+              }
+              window.location.reload();
+            }}
+            className="px-3.5 py-1.5 rounded-lg bg-[#131B2E] border border-[#3FC7D4]/20 hover:border-[#3FC7D4] text-[#8A95AA] hover:text-[#E7ECF5] text-xs font-mono transition-all flex items-center gap-1.5 active:scale-[0.97]"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>RESET BRIEFING</span>
+          </button>
+
+          {savedToast && (
+            <div className="flex items-center gap-2 font-mono text-xs text-[#4CAF7D] bg-[#4CAF7D]/15 border border-[#4CAF7D]/30 px-3 py-1.5 rounded-lg animate-fade-in">
+              <CheckCircle className="w-4 h-4" />
+              <span>SAVED</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Grid: 3 Main Preference Panels */}
