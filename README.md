@@ -110,6 +110,7 @@ UDT-X features a React 19 + TypeScript + Vite + Tailwind CSS v4 mission-control 
 | **Graph Correlator** | `udtx-correlation` | Neo4j 5 Graph DB | 30-minute sliding window multi-stage attack chain synthesis. |
 | **Threat Intel** | `udtx-intel` | Local IOC Database | MITRE ATT&CK mapping & technique enrichment. |
 | **Risk Engine & API** | `udtx-api` | HTTP `8000`, `/ws/live` | Dynamic composite risk scoring (0-100), JWT auth, rate limiting, REST & WS. |
+| **AI Sentinel Copilot**| `udtx-copilot` | HTTP `8000/copilot`, Local RAG | AI-Native website copilot with permission gates, capability graph, ML personalization & offline mode. |
 | **SOC Dashboard** | `udtx-dashboard` | HTTP `3001` | React 19 + TypeScript + 3D Listening Sphere + full discovery UX. |
 
 ---

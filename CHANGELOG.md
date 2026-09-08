@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.4.0] - 2026-09-08
+
+### 🤖 AI-Native Sentinel Copilot & Offline Fallback Subsystem
+- **Controlled Tool Execution Pipeline:**
+  - Implemented the strict sequential agent workflow: `Understand -> Retrieve Context -> Determine Intent -> Check Permissions -> Select Tool -> Execute -> Verify -> Respond`.
+- **Website Capability Graph & Action Registry:**
+  - Created `capability_registry.py` & `capabilityRegistry.ts` defining all 10 console routes, actions, schema parameters, role requirements (`analyst` vs `admin`), and offline compatibility flags.
+- **ML Personalization & Recommendation Engine:**
+  - Developed `personalization.py` generating dynamic shift guidance based on active kill-chain severity, recent alerts, and operator clearances.
+- **Offline RAG & Action Staging Queue:**
+  - Built `offlineCopilot.ts` enabling full in-browser natural language understanding, local concept explanations, safe route navigation, and staging of online-only operations when air-gapped.
+- **Mission-Control Copilot Modal (`CopilotModal.tsx`):**
+  - Cyberpunk floating terminal accessible via global `Ctrl + K` or console rail button with real-time online/offline connection badges, sensitive operation authorization modals, and verified navigation execution.
+
+---
+
 ## [1.3.0] - 2026-09-08
 
 ### 🎨 Motion & Micro-Interaction Overhaul

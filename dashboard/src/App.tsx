@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, NavLink, Navigate, useLocation } from "re
 import {
   Activity,
   AlertTriangle,
+  Bot,
   Compass,
   Database,
   Flame,
@@ -35,6 +36,7 @@ import { SettingsPage } from "./pages/Settings";
 import { BootSequence } from "./components/BootSequence";
 import { TourGuide } from "./components/TourGuide";
 import { ExperiencePrompt } from "./components/ExperiencePrompt";
+import { CopilotModal } from "./components/CopilotModal";
 
 interface ConsoleRailProps {
   isMobileOpen: boolean;
@@ -189,6 +191,21 @@ const ConsoleRail: React.FC<ConsoleRailProps> = ({ isMobileOpen, setIsMobileOpen
             </NavLink>
           </Tooltip>
 
+          <Tooltip content="AI-Native Enclave Copilot (Ctrl + K)" position="right" className="w-full">
+            <button
+              onClick={() => {
+                setIsMobileOpen(false);
+                window.dispatchEvent(new CustomEvent("open-udtx-copilot"));
+              }}
+              id="tour-nav-copilot-btn"
+              className="w-full flex items-center gap-2.5 px-2.5 lg:px-3 py-2 rounded-lg text-xs font-mono font-bold bg-[#3FC7D4]/10 hover:bg-[#3FC7D4]/20 border border-[#3FC7D4]/30 text-[#3FC7D4] transition-all text-left group shadow-[0_0_12px_rgba(63,199,212,0.15)] active:scale-[0.97]"
+            >
+              <Bot className="w-4 h-4 shrink-0 mx-auto lg:mx-0 animate-pulse text-[#3FC7D4]" />
+              <span className={`truncate ${!isMobileOpen ? "hidden lg:inline" : "inline"}`}>SENTINEL COPILOT</span>
+              <span className={`ml-auto text-[9px] px-1.5 py-0.5 rounded bg-[#0B1220] border border-[#3FC7D4]/30 text-[#8A95AA] ${!isMobileOpen ? "hidden lg:inline" : "inline"}`}>^K</span>
+            </button>
+          </Tooltip>
+
           <Tooltip content="Interactive 14-Step Station Onboarding" position="right" className="w-full">
             <button
               onClick={() => {
@@ -255,6 +272,25 @@ export const App: React.FC = () => {
   const [isBooting, setIsBooting] = useState(false);
   const [showExperiencePrompt, setShowExperiencePrompt] = useState(false);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [isCopilotOpen, setIsCopilotOpen] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setIsCopilotOpen((prev) => !prev);
+      }
+    };
+    const handleCustomOpen = () => setIsCopilotOpen(true);
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("open-udtx-copilot", handleCustomOpen);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("open-udtx-copilot", handleCustomOpen);
+    };
+  }, []);
 
   useEffect(() => {
     // Open authenticated WebSocket with JWT token
@@ -354,6 +390,12 @@ export const App: React.FC = () => {
         <main className="flex-1 overflow-y-auto p-4 sm:p-5 lg:p-6 relative min-w-0">
           <AnimatedRoutes />
         </main>
+
+        {/* Interactive 14-Step Station Tour */}
+        <TourGuide />
+
+        {/* AI-Native Sentinel Copilot Modal */}
+        <CopilotModal isOpen={isCopilotOpen} onClose={() => setIsCopilotOpen(false)} />
       </div>
     </BrowserRouter>
   );
