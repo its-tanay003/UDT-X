@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.6.0] - 2026-09-11
+
+### 🌐 Public Surface, DPDP Act Compliance & Accessibility Overhaul
+- **Public Surface Architecture & Routing Overhaul:**
+  - Decoupled public marketing/documentation layer (`/`, `/faq`, `/privacy`, `/terms`, `/login`) from authenticated enclave consoles (`/app/*`).
+  - Fixed wildcard routing bug with an on-brand, auth-aware `NotFound.tsx` ("SIGNAL LOST" framing).
+- **India DPDP Act 2023 & DPDP Rules 2025 Compliance:**
+  - Published comprehensive statutory Privacy Policy at `/privacy` with explicit Data Fiduciary disclosures, specific purpose tables, and 7-day Grievance Redressal SLA.
+  - Built Terms of Use at `/terms` with acceptable use mandates and strict unauthorized surveillance prohibitions.
+  - Implemented on-brand `CookieConsentBanner.tsx` and `analytics.ts` with zero tracking before explicit opt-in consent.
+- **Security-Aware SEO & Crawl Protection:**
+  - `public/robots.txt`: Explicitly allows only public surfaces (`/`, `/faq`, `/privacy`, `/terms`, `/login`) while strictly disallowing all authenticated enclave routes.
+  - `public/sitemap.xml`: Lists public surfaces with `lastmod` timestamps.
+  - Added `<meta name="robots" content="noindex, nofollow">` to all authenticated routes as defense in depth via `SEO.tsx`.
+- **Favicon & PWA Matrix:**
+  - Added 16x16, 32x32 PNG fallbacks, 180x180 Apple Touch icon, and 1200x630 OpenGraph social share image (`og-image.png`) with `site.webmanifest`.
+- **WCAG 2.2 AA Accessibility Audit:**
+  - Verified ARIA regions, labels, and roles across `ListeningSphere.tsx`, `SonarRadialChart.tsx`, and interactive console tools; 0 broken links verified across all internal and public routes.
+
+---
+
 ## [1.5.0] - 2026-09-08
 
 ### 🛡️ Extreme AI Agent Adversarial Red-Team & Verification Matrix

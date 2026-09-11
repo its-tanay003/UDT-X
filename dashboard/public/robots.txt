@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /$
+Allow: /login$
+Allow: /privacy$
+Allow: /terms$
+Allow: /faq$
+Disallow: /app
+Disallow: /app/
+Disallow: /monitor
+Disallow: /graph
+Disallow: /incidents
+Disallow: /alerts
+Disallow: /settings
+Disallow: /profile
+Disallow: /replay
+Disallow: /performance
+
+Sitemap: https://udtx.security/sitemap.xml

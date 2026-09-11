@@ -17,10 +17,22 @@ import {
   User,
   Zap,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useLiveStore } from "./lib/store";
 import { useAuthStore } from "./lib/auth";
 import { Tooltip } from "./components/Tooltip";
+import { CookieConsentBanner } from "./components/CookieConsentBanner";
+import { SEO } from "./components/SEO";
+
+// Public Pages
+import { LandingPage } from "./pages/Landing";
+import { FAQPage } from "./pages/FAQ";
+import { PrivacyPage } from "./pages/Privacy";
+import { TermsPage } from "./pages/Terms";
 import { LoginPage } from "./pages/Login";
+import { NotFoundPage } from "./pages/NotFound";
+
+// Authenticated Console Pages
 import { OverviewPage } from "./pages/Overview";
 import { LiveMonitorPage } from "./pages/LiveMonitor";
 import { IncidentsPage } from "./pages/Incidents";
@@ -33,6 +45,8 @@ import { ReplayLabPage } from "./pages/ReplayLab";
 import { PerformancePage } from "./pages/Performance";
 import { ProfilePage } from "./pages/Profile";
 import { SettingsPage } from "./pages/Settings";
+
+// Enclave Onboarding & Modals
 import { BootSequence } from "./components/BootSequence";
 import { TourGuide } from "./components/TourGuide";
 import { ExperiencePrompt } from "./components/ExperiencePrompt";
@@ -48,14 +62,14 @@ const ConsoleRail: React.FC<ConsoleRailProps> = ({ isMobileOpen, setIsMobileOpen
   const { user, isThrottled, startTour } = useAuthStore();
 
   const navItems = [
-    { to: "/", label: "OVERVIEW", icon: Shield, tip: "Security Command Center & Enclave Status" },
-    { to: "/monitor", label: "LIVE MONITOR", icon: Radio, tip: "Real-time Telemetry & Anomaly Stream" },
-    { to: "/alerts", label: "ALERTS FEED", icon: Search, tip: "Comprehensive Anomaly Index & SIEM Export" },
-    { to: "/incidents", label: "INCIDENT DOSSIER", icon: Flame, tip: "Correlated Multi-stage Attack Chains" },
-    { to: "/graph", label: "NETWORK GRAPH", icon: Globe, tip: "3D Passive Tap & Topology Canvas" },
-    { to: "/threats", label: "THREAT CENTER", icon: Zap, tip: "Radial Sonar Threat Matrix & Analytics" },
-    { to: "/replay", label: "REPLAY LAB", icon: RefreshCw, tip: "Hardware-Guarded Attack Scenario Simulator" },
-    { to: "/performance", label: "PERFORMANCE", icon: Activity, tip: "Sub-5ms SLA & Wire Rate Telemetry" },
+    { to: "/app", label: "OVERVIEW", icon: Shield, tip: "Security Command Center & Enclave Status" },
+    { to: "/app/monitor", label: "LIVE MONITOR", icon: Radio, tip: "Real-time Telemetry & Anomaly Stream" },
+    { to: "/app/alerts", label: "ALERTS FEED", icon: Search, tip: "Comprehensive Anomaly Index & SIEM Export" },
+    { to: "/app/incidents", label: "INCIDENT DOSSIER", icon: Flame, tip: "Correlated Multi-stage Attack Chains" },
+    { to: "/app/graph", label: "NETWORK GRAPH", icon: Globe, tip: "3D Passive Tap & Topology Canvas" },
+    { to: "/app/threats", label: "THREAT CENTER", icon: Zap, tip: "Radial Sonar Threat Matrix & Analytics" },
+    { to: "/app/replay", label: "REPLAY LAB", icon: RefreshCw, tip: "Hardware-Guarded Attack Scenario Simulator" },
+    { to: "/app/performance", label: "PERFORMANCE", icon: Activity, tip: "Sub-5ms SLA & Wire Rate Telemetry" },
   ];
 
   return (
@@ -137,7 +151,7 @@ const ConsoleRail: React.FC<ConsoleRailProps> = ({ isMobileOpen, setIsMobileOpen
                 <Tooltip key={item.to} content={item.tip} position="right" className="w-full">
                   <NavLink
                     to={item.to}
-                    end={item.to === "/"}
+                    end={item.to === "/app"}
                     onClick={() => setIsMobileOpen(false)}
                     id={`tour-nav-${item.label.toLowerCase().replace(/[\s-]+/g, "_")}`}
                     className={({ isActive }) =>
@@ -161,7 +175,7 @@ const ConsoleRail: React.FC<ConsoleRailProps> = ({ isMobileOpen, setIsMobileOpen
         <div id="tour-user-profile" className="pt-3 border-t border-[#3FC7D4]/10 space-y-1 font-mono text-xs">
           <Tooltip content="Operator Clearances & Active Session" position="right" className="w-full">
             <NavLink
-              to="/profile"
+              to="/app/profile"
               onClick={() => setIsMobileOpen(false)}
               id="tour-nav-profile"
               className={({ isActive }) =>
@@ -177,7 +191,7 @@ const ConsoleRail: React.FC<ConsoleRailProps> = ({ isMobileOpen, setIsMobileOpen
 
           <Tooltip content="Detection Thresholds & Particle Preferences" position="right" className="w-full">
             <NavLink
-              to="/settings"
+              to="/app/settings"
               onClick={() => setIsMobileOpen(false)}
               id="tour-nav-settings"
               className={({ isActive }) =>
@@ -222,7 +236,7 @@ const ConsoleRail: React.FC<ConsoleRailProps> = ({ isMobileOpen, setIsMobileOpen
 
           <div className={`pt-2 text-[10px] text-[#8A95AA] justify-between ${!isMobileOpen ? "hidden lg:flex" : "flex"}`}>
             <span>AIR-GAPPED</span>
-            <span className="text-[#3FC7D4]">v1.1.0</span>
+            <span className="text-[#3FC7D4]">v1.5.0</span>
           </div>
         </div>
       </aside>
@@ -230,49 +244,15 @@ const ConsoleRail: React.FC<ConsoleRailProps> = ({ isMobileOpen, setIsMobileOpen
   );
 };
 
-import { motion, AnimatePresence } from "framer-motion";
-
-const AnimatedRoutes: React.FC = () => {
-  const location = useLocation();
-
-  return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={location.pathname}
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -6 }}
-        transition={{ duration: 0.18, ease: "easeOut" }}
-        className="w-full"
-      >
-        <Routes location={location} key={location.pathname}>
-          <Route path="/" element={<OverviewPage />} />
-          <Route path="/monitor" element={<LiveMonitorPage />} />
-          <Route path="/incidents" element={<IncidentsPage />} />
-          <Route path="/incidents/:id" element={<IncidentDetailPage />} />
-          <Route path="/alerts" element={<AlertsPage />} />
-          <Route path="/alerts/:id/evidence" element={<EvidenceExplorerPage />} />
-          <Route path="/graph" element={<NetworkGraphPage />} />
-          <Route path="/threats" element={<ThreatCenterPage />} />
-          <Route path="/replay" element={<ReplayLabPage />} />
-          <Route path="/performance" element={<PerformancePage />} />
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          {/* Fallback */}
-          <Route path="*" element={<OverviewPage />} />
-        </Routes>
-      </motion.div>
-    </AnimatePresence>
-  );
-};
-
-export const App: React.FC = () => {
+// Authenticated Enclave Dashboard Shell
+const AuthenticatedEnclave: React.FC = () => {
   const { user, isThrottled, throttleSeconds } = useAuthStore();
   const { connectWebSocket } = useLiveStore();
   const [isBooting, setIsBooting] = useState(false);
   const [showExperiencePrompt, setShowExperiencePrompt] = useState(false);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -293,7 +273,7 @@ export const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // Open authenticated WebSocket with JWT token
+    if (!user) return;
     const token = useAuthStore.getState().accessToken;
     const wsUrl = token
       ? `ws://localhost:8000/ws/live?token=${token}`
@@ -303,15 +283,9 @@ export const App: React.FC = () => {
     return cleanup;
   }, [connectWebSocket, user]);
 
-  // If user is not authenticated, render Login Page
+  // If not authenticated, redirect to Login
   if (!user) {
-    return (
-      <LoginPage
-        onSuccess={() => {
-          setIsBooting(true);
-        }}
-      />
-    );
+    return <Navigate to="/login" replace />;
   }
 
   // If boot sequence is active on login, render BootSequence
@@ -338,65 +312,129 @@ export const App: React.FC = () => {
   }
 
   return (
-    <BrowserRouter>
-      <div className="w-screen h-screen bg-[#0B1220] text-[#E7ECF5] flex flex-col md:flex-row overflow-hidden font-sans relative">
-        {/* Rate Limiting Toast Notification */}
-        {isThrottled && (
-          <div className="absolute top-4 right-4 z-50 p-4 rounded-xl bg-[#131B2E] border border-[#FF8A3D] shadow-2xl flex items-center gap-3 font-mono text-xs text-[#FF8A3D] animate-bounce">
-            <AlertTriangle className="w-5 h-5" />
-            <div>
-              <div className="font-bold">TRANSMISSION THROTTLED (HTTP 429)</div>
-              <div className="text-[10px] text-[#8A95AA]">
-                Resuming in <span className="text-[#FF8A3D] font-bold">{throttleSeconds}s</span>...
-              </div>
+    <div className="w-screen h-screen bg-[#0B1220] text-[#E7ECF5] flex flex-col md:flex-row overflow-hidden font-sans relative">
+      {/* Defense in depth: noindex on all authenticated routes */}
+      <SEO
+        title="UDT-X Enclave Mission Control"
+        description="Restricted Enclave Console"
+        noIndex={true}
+      />
+
+      {/* Rate Limiting Toast Notification */}
+      {isThrottled && (
+        <div className="absolute top-4 right-4 z-50 p-4 rounded-xl bg-[#131B2E] border border-[#FF8A3D] shadow-2xl flex items-center gap-3 font-mono text-xs text-[#FF8A3D] animate-bounce">
+          <AlertTriangle className="w-5 h-5" />
+          <div>
+            <div className="font-bold">TRANSMISSION THROTTLED (HTTP 429)</div>
+            <div className="text-[10px] text-[#8A95AA]">
+              Resuming in <span className="text-[#FF8A3D] font-bold">{throttleSeconds}s</span>...
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Mobile Top Navigation Bar (Hidden on md+) */}
-        <div className="md:hidden w-full bg-[#0B1220] border-b border-[#3FC7D4]/15 px-4 py-3 flex items-center justify-between shrink-0 z-30">
-          <div className="flex items-center gap-2.5">
-            <button
-              onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
-              className="p-1.5 rounded-lg bg-[#131B2E] border border-[#3FC7D4]/30 text-[#3FC7D4] hover:bg-[#1B2540] transition-colors"
-              aria-label="Toggle Station Menu"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
-            <div className="flex items-center gap-2">
-              <Shield className="w-4 h-4 text-[#3FC7D4]" />
-              <span className="font-display font-bold text-sm tracking-wider text-[#E7ECF5]">
-                UDT-X ENCLAVE
-              </span>
-            </div>
-          </div>
-
-          <div className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#131B2E] border border-[#3FC7D4]/25 text-[#3FC7D4] flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#4CAF7D] animate-pulse" />
-            <span>AIR-GAPPED</span>
+      {/* Mobile Top Navigation Bar (Hidden on md+) */}
+      <div className="md:hidden w-full bg-[#0B1220] border-b border-[#3FC7D4]/15 px-4 py-3 flex items-center justify-between shrink-0 z-30">
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
+            className="p-1.5 rounded-lg bg-[#131B2E] border border-[#3FC7D4]/30 text-[#3FC7D4] hover:bg-[#1B2540] transition-colors"
+            aria-label="Toggle Station Menu"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+          <div className="flex items-center gap-2">
+            <Shield className="w-4 h-4 text-[#3FC7D4]" />
+            <span className="font-display font-bold text-sm tracking-wider text-[#E7ECF5]">
+              UDT-X ENCLAVE
+            </span>
           </div>
         </div>
 
-        {/* Tour Guide Spotlight Overlay */}
-        <TourGuide />
-
-        {/* Left Console Rail Navigation */}
-        <ConsoleRail
-          isMobileOpen={isMobileNavOpen}
-          setIsMobileOpen={setIsMobileNavOpen}
-        />
-
-        {/* Main Mission Control Screen Area */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-5 lg:p-6 relative min-w-0">
-          <AnimatedRoutes />
-        </main>
-
-        {/* Interactive 14-Step Station Tour */}
-        <TourGuide />
-
-        {/* AI-Native Sentinel Copilot Modal */}
-        <CopilotModal isOpen={isCopilotOpen} onClose={() => setIsCopilotOpen(false)} />
+        <div className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#131B2E] border border-[#3FC7D4]/25 text-[#3FC7D4] flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#4CAF7D] animate-pulse" />
+          <span>AIR-GAPPED</span>
+        </div>
       </div>
+
+      {/* Left Console Rail Navigation */}
+      <ConsoleRail
+        isMobileOpen={isMobileNavOpen}
+        setIsMobileOpen={setIsMobileNavOpen}
+      />
+
+      {/* Main Mission Control Screen Area */}
+      <main className="flex-1 overflow-y-auto p-4 sm:p-5 lg:p-6 relative min-w-0">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
+            className="w-full"
+          >
+            <Routes location={location} key={location.pathname}>
+              <Route path="/" element={<OverviewPage />} />
+              <Route path="/monitor" element={<LiveMonitorPage />} />
+              <Route path="/incidents" element={<IncidentsPage />} />
+              <Route path="/incidents/:id" element={<IncidentDetailPage />} />
+              <Route path="/alerts" element={<AlertsPage />} />
+              <Route path="/alerts/:id/evidence" element={<EvidenceExplorerPage />} />
+              <Route path="/graph" element={<NetworkGraphPage />} />
+              <Route path="/threats" element={<ThreatCenterPage />} />
+              <Route path="/replay" element={<ReplayLabPage />} />
+              <Route path="/performance" element={<PerformancePage />} />
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </motion.div>
+        </AnimatePresence>
+      </main>
+
+      {/* Interactive 14-Step Station Tour */}
+      <TourGuide />
+
+      {/* AI-Native Sentinel Copilot Modal */}
+      <CopilotModal isOpen={isCopilotOpen} onClose={() => setIsCopilotOpen(false)} />
+    </div>
+  );
+};
+
+export const App: React.FC = () => {
+  return (
+    <BrowserRouter>
+      {/* Universal Cookie & DPDP Consent Banner */}
+      <CookieConsentBanner />
+
+      <Routes>
+        {/* Public Surface Routes */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/faq" element={<FAQPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/terms" element={<TermsPage />} />
+        <Route path="/login" element={<LoginPage onSuccess={() => {}} />} />
+
+        {/* Backward Compatibility Deep Links (Redirect to /app/*) */}
+        <Route path="/monitor" element={<Navigate to="/app/monitor" replace />} />
+        <Route path="/incidents" element={<Navigate to="/app/incidents" replace />} />
+        <Route path="/incidents/:id" element={<Navigate to="/app/incidents/:id" replace />} />
+        <Route path="/alerts" element={<Navigate to="/app/alerts" replace />} />
+        <Route path="/alerts/:id/evidence" element={<Navigate to="/app/alerts/:id/evidence" replace />} />
+        <Route path="/graph" element={<Navigate to="/app/graph" replace />} />
+        <Route path="/threats" element={<Navigate to="/app/threats" replace />} />
+        <Route path="/replay" element={<Navigate to="/app/replay" replace />} />
+        <Route path="/performance" element={<Navigate to="/app/performance" replace />} />
+        <Route path="/profile" element={<Navigate to="/app/profile" replace />} />
+        <Route path="/settings" element={<Navigate to="/app/settings" replace />} />
+
+        {/* Authenticated Dashboard Enclave Sub-tree */}
+        <Route path="/app/*" element={<AuthenticatedEnclave />} />
+
+        {/* Real 404 Signal Lost Fallback */}
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
     </BrowserRouter>
   );
 };

@@ -1,6 +1,8 @@
 import React, { useState } from "react";
-import { Shield, Key, AlertTriangle, ArrowRight, Radio } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Shield, Key, AlertTriangle, ArrowRight, ArrowLeft } from "lucide-react";
 import { useAuthStore } from "../lib/auth";
+import { SEO } from "../components/SEO";
 
 interface LoginProps {
   onSuccess: () => void;
@@ -8,6 +10,7 @@ interface LoginProps {
 
 export const LoginPage: React.FC<LoginProps> = ({ onSuccess }) => {
   const { setAuth } = useAuthStore();
+  const navigate = useNavigate();
   const [email, setEmail] = useState("admin@udtx.local");
   const [password, setPassword] = useState("AdminEnclave2026!");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -33,6 +36,7 @@ export const LoginPage: React.FC<LoginProps> = ({ onSuccess }) => {
       const data = await res.json();
       setAuth(data.user, data.access_token);
       onSuccess();
+      navigate("/app");
     } catch (err: any) {
       setErrorMessage(err.message || "Failed to authenticate station");
     } finally {
@@ -41,9 +45,26 @@ export const LoginPage: React.FC<LoginProps> = ({ onSuccess }) => {
   };
 
   return (
-    <div className="w-screen h-screen bg-[#0B1220] flex items-center justify-center p-4 sm:p-6 lg:p-8 relative select-none overflow-y-auto">
+    <div className="w-screen min-h-screen bg-[#0B1220] flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 relative select-none">
+      <SEO
+        title="Station Login | Restricted Enclave Console — UDT-X"
+        description="Authenticate to the UDT-X Autonomous Network Defense Enclave. Hardware-guarded passive optical SIGINT listening post."
+        canonical="https://udtx.security/login"
+      />
+
       {/* Background Ambience / Grid */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(63,199,212,0.06)_0%,transparent_70%)] pointer-events-none" />
+
+      {/* Top Bar Link back to Public Home */}
+      <div className="absolute top-4 left-4 sm:left-8 z-20">
+        <Link
+          to="/"
+          className="flex items-center gap-1.5 text-xs font-mono text-[#8A95AA] hover:text-[#3FC7D4] transition-colors p-2 rounded-lg bg-[#131B2E]/60 border border-[#3FC7D4]/15 backdrop-blur-sm"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Public Home</span>
+        </Link>
+      </div>
 
       <div className="w-full max-w-md my-auto p-6 sm:p-8 rounded-2xl bg-[#131B2E] border border-[#3FC7D4]/25 shadow-2xl relative z-10 space-y-6">
         {/* Header Badge */}
@@ -77,7 +98,7 @@ export const LoginPage: React.FC<LoginProps> = ({ onSuccess }) => {
               Analyst Enclave Email / Call-Sign
             </label>
             <input
-              type="text"
+              type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -128,6 +149,21 @@ export const LoginPage: React.FC<LoginProps> = ({ onSuccess }) => {
             <span>PASSWORD:</span>
             <span className="text-[#E7ECF5]">AdminEnclave2026!</span>
           </div>
+        </div>
+
+        {/* Compliance Links Footer */}
+        <div className="pt-2 text-center font-mono text-[10px] text-[#8A95AA] flex items-center justify-center gap-3">
+          <Link to="/privacy" className="hover:text-[#3FC7D4] underline">
+            Privacy (DPDP)
+          </Link>
+          <span>•</span>
+          <Link to="/terms" className="hover:text-[#3FC7D4] underline">
+            Terms of Use
+          </Link>
+          <span>•</span>
+          <Link to="/faq" className="hover:text-[#3FC7D4] underline">
+            FAQ
+          </Link>
         </div>
       </div>
     </div>

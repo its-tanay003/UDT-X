@@ -320,7 +320,10 @@ export const ListeningSphere: React.FC<ListeningSphereProps> = ({
   return (
     <div
       ref={containerRef}
-      className="w-full relative rounded-xl overflow-hidden border border-[#3FC7D4]/15 bg-[#0B1220]"
+      role="region"
+      aria-label="3D Ambient Listening Sphere: Real-time passive optical data-diode network topology and telemetry flows"
+      tabIndex={0}
+      className="w-full relative rounded-xl overflow-hidden border border-[#3FC7D4]/15 bg-[#0B1220] focus:ring-2 focus:ring-[#3FC7D4] focus:outline-none"
       style={{ height }}
     >
       {/* Background Sonar Grid Overlay */}

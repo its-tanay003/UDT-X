@@ -138,6 +138,8 @@ export const SonarRadialChart: React.FC<SonarRadialChartProps> = ({
     <div ref={containerRef} className="w-full flex flex-col items-center justify-center p-2 sm:p-4 overflow-hidden">
       <svg
         ref={svgRef}
+        role="img"
+        aria-label="Radial Sonar Threat Matrix: Interactive anomaly distribution across MITRE threat categories"
         width={dimensions.width}
         height={dimensions.height}
         className="overflow-visible max-w-full"
