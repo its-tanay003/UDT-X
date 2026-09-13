@@ -88,10 +88,19 @@ export const useLiveStore = create<LiveState>((set, get) => ({
 
   fetchInitialData: async (apiUrl = "http://localhost:8000") => {
     try {
+      // Import auth store state dynamically to avoid circular dependencies
+      const token = (await import("./auth")).useAuthStore.getState().accessToken;
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
       const [perfRes, alertsRes, incsRes] = await Promise.allSettled([
-        fetch(`${apiUrl}/performance`).then((r) => (r.ok ? r.json() : null)),
-        fetch(`${apiUrl}/alerts?limit=15`).then((r) => (r.ok ? r.json() : [])),
-        fetch(`${apiUrl}/incidents?limit=10`).then((r) => (r.ok ? r.json() : [])),
+        fetch(`${apiUrl}/performance`, { headers }).then((r) => (r.ok ? r.json() : null)),
+        fetch(`${apiUrl}/alerts?limit=15`, { headers }).then((r) => (r.ok ? r.json() : [])),
+        fetch(`${apiUrl}/incidents?limit=10`, { headers }).then((r) => (r.ok ? r.json() : [])),
       ]);
 
       if (perfRes.status === "fulfilled" && perfRes.value) {
@@ -176,7 +185,21 @@ export const useLiveStore = create<LiveState>((set, get) => ({
     return () => {
       isCleanedUp = true;
       if (reconnectTimeout) clearTimeout(reconnectTimeout);
-      if (ws) ws.close();
+      if (ws) {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.close();
+        } else if (ws.readyState === WebSocket.CONNECTING) {
+          // If still handshake-connecting, defer close to onopen or nullify listeners
+          ws.onopen = () => {
+            try {
+              ws?.close();
+            } catch {}
+          };
+          ws.onmessage = null;
+          ws.onerror = null;
+          ws.onclose = null;
+        }
+      }
     };
   },
 }));

@@ -4,6 +4,8 @@ import { Shield, Key, AlertTriangle, ArrowRight, ArrowLeft } from "lucide-react"
 import { useAuthStore } from "../lib/auth";
 import { SEO } from "../components/SEO";
 
+import { getApiBaseUrl } from "../lib/apiConfig";
+
 interface LoginProps {
   onSuccess: () => void;
 }
@@ -22,26 +24,34 @@ export const LoginPage: React.FC<LoginProps> = ({ onSuccess }) => {
     setErrorMessage(null);
 
     try {
-      const res = await fetch("http://localhost:8000/auth/login", {
+      const apiHost = getApiBaseUrl();
+
+      const res = await fetch(`${apiHost}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: email.trim(), password }),
       });
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.detail || "Authentication to enclave rejected");
+        throw new Error(data.detail || "Authentication to enclave rejected. Please check email/password.");
       }
 
       const data = await res.json();
       setAuth(data.user, data.access_token);
       onSuccess();
-      navigate("/app");
+      navigate("/app", { replace: true });
     } catch (err: any) {
-      setErrorMessage(err.message || "Failed to authenticate station");
+      setErrorMessage(err.message || "Failed to authenticate station. Ensure backend is online on port 8000.");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleQuickFill = (accEmail: string, accPass: string) => {
+    setEmail(accEmail);
+    setPassword(accPass);
+    setErrorMessage(null);
   };
 
   return (
@@ -100,6 +110,7 @@ export const LoginPage: React.FC<LoginProps> = ({ onSuccess }) => {
             <input
               type="email"
               required
+              autoComplete="username"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="operator@udtx.local"
@@ -114,6 +125,7 @@ export const LoginPage: React.FC<LoginProps> = ({ onSuccess }) => {
             <input
               type="password"
               required
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••••••"
@@ -140,14 +152,27 @@ export const LoginPage: React.FC<LoginProps> = ({ onSuccess }) => {
         </form>
 
         {/* Demo Credentials Helper */}
-        <div className="p-3 rounded-lg bg-[#0B1220] border border-[#3FC7D4]/10 font-mono text-[11px] text-[#8A95AA] space-y-1">
-          <div className="flex justify-between text-[#3FC7D4]">
-            <span>ADMIN ACCOUNT:</span>
-            <span>admin@udtx.local</span>
+        <div className="p-3.5 rounded-lg bg-[#0B1220] border border-[#3FC7D4]/15 font-mono text-[11px] text-[#8A95AA] space-y-2.5">
+          <div className="text-[10px] uppercase text-[#8A95AA] tracking-wider font-bold">
+            Demo Enclave Accounts (Click to Fill):
           </div>
-          <div className="flex justify-between">
-            <span>PASSWORD:</span>
-            <span className="text-[#E7ECF5]">AdminEnclave2026!</span>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => handleQuickFill("admin@udtx.local", "AdminEnclave2026!")}
+              className="p-2 rounded bg-[#131B2E] border border-[#3FC7D4]/30 hover:border-[#3FC7D4] text-left transition-colors"
+            >
+              <div className="text-[#3FC7D4] font-bold text-[10px]">👑 ADMINISTRATOR</div>
+              <div className="text-[9px] text-[#E7ECF5] truncate">admin@udtx.local</div>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleQuickFill("analyst@udtx.local", "AnalystEnclave2026!")}
+              className="p-2 rounded bg-[#131B2E] border border-[#4CAF7D]/30 hover:border-[#4CAF7D] text-left transition-colors"
+            >
+              <div className="text-[#4CAF7D] font-bold text-[10px]">🛡️ ANALYST LEAD</div>
+              <div className="text-[9px] text-[#E7ECF5] truncate">analyst@udtx.local</div>
+            </button>
           </div>
         </div>
 

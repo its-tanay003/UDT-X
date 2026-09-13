@@ -260,6 +260,10 @@ const AuthenticatedEnclave: React.FC = () => {
         e.preventDefault();
         setIsCopilotOpen((prev) => !prev);
       }
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "v") {
+        e.preventDefault();
+        setIsCopilotOpen(true);
+      }
     };
     const handleCustomOpen = () => setIsCopilotOpen(true);
 

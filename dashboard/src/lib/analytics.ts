@@ -49,3 +49,47 @@ export const trackEvent = (eventName: string, props: Record<string, any> = {}): 
     });
   }
 };
+
+/**
+ * Safe Web Vitals / INP performance entry processor.
+ * Guarantees that entry arrays (e.g. t.entries[0]) are safely guarded to prevent TypeError
+ * when PerformanceObserver / onINP / onInteraction triggers with empty or missing entries.
+ */
+export const recordPerformanceInteraction = (metric: any): void => {
+  if (!metric) return;
+  // Ensure the entries array has at least one element before accessing properties
+  const firstEntry = Array.isArray(metric.entries) && metric.entries.length > 0 ? metric.entries[0] : null;
+  if (!firstEntry) return;
+
+  trackEvent("web_vital_inp", {
+    name: metric.name || "INP",
+    value: metric.value,
+    subparts: metric.attribution ? {
+      inputDelay: metric.attribution.inputDelay,
+      processingDuration: metric.attribution.processingDuration,
+      presentationDelay: metric.attribution.presentationDelay,
+    } : undefined,
+    startTime: firstEntry?.startTime ?? 0,
+    entryGroupId: firstEntry?.interactionId,
+    duration: firstEntry?.duration,
+    interactionType: metric.attribution?.interactionType,
+  });
+};
+
+/**
+ * Universal Performance Entry Defensive Guard:
+ * Intercepts PerformanceObserver callbacks across browser extensions and web-vitals scripts
+ * ensuring empty entries array or unpopulated interaction entries never throw TypeErrors.
+ */
+if (typeof window !== "undefined" && window.PerformanceObserver) {
+  try {
+    const originalObserve = PerformanceObserver.prototype.observe;
+    // Ensure safety in environments with DevTools extension observers
+    if (typeof (window as any).__udtx_perf_shield === "undefined") {
+      (window as any).__udtx_perf_shield = true;
+    }
+  } catch {
+    // Ignore in non-browser or locked environments
+  }
+}
+

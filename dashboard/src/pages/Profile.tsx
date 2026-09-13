@@ -275,6 +275,7 @@ export const ProfilePage: React.FC = () => {
                 <input
                   type="password"
                   required
+                  autoComplete="current-password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   className="w-full mt-1 px-3 py-2 rounded-lg bg-[#0B1220] border border-[#3FC7D4]/20 text-[#E7ECF5] focus:outline-none focus:border-[#3FC7D4]"
@@ -286,6 +287,7 @@ export const ProfilePage: React.FC = () => {
                   type="password"
                   required
                   minLength={8}
+                  autoComplete="new-password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   className="w-full mt-1 px-3 py-2 rounded-lg bg-[#0B1220] border border-[#3FC7D4]/20 text-[#E7ECF5] focus:outline-none focus:border-[#3FC7D4]"
@@ -296,6 +298,7 @@ export const ProfilePage: React.FC = () => {
                 <input
                   type="password"
                   required
+                  autoComplete="new-password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className="w-full mt-1 px-3 py-2 rounded-lg bg-[#0B1220] border border-[#3FC7D4]/20 text-[#E7ECF5] focus:outline-none focus:border-[#3FC7D4]"
@@ -329,6 +332,7 @@ export const ProfilePage: React.FC = () => {
                     <input
                       type="text"
                       required
+                      autoComplete="off"
                       placeholder="analyst2@udtx.local"
                       value={provEmail}
                       onChange={(e) => setProvEmail(e.target.value)}
@@ -340,6 +344,7 @@ export const ProfilePage: React.FC = () => {
                     <input
                       type="text"
                       required
+                      autoComplete="off"
                       placeholder="Radar Specialist"
                       value={provName}
                       onChange={(e) => setProvName(e.target.value)}
@@ -355,6 +360,7 @@ export const ProfilePage: React.FC = () => {
                       type="password"
                       required
                       minLength={8}
+                      autoComplete="new-password"
                       value={provPassword}
                       onChange={(e) => setProvPassword(e.target.value)}
                       className="w-full mt-1 px-3 py-1.5 rounded-lg bg-[#0B1220] border border-[#3FC7D4]/20 text-[#E7ECF5] focus:outline-none focus:border-[#3FC7D4]"

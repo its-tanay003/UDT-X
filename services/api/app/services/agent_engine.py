@@ -42,6 +42,7 @@ class CopilotResponse(BaseModel):
     message: str
     intent: str
     confidence: float
+    spoken_response: Optional[str] = None
     tool_call: Optional[CopilotToolCall] = None
     executed_action_result: Optional[Dict[str, Any]] = None
     suggested_routes: List[str] = Field(default_factory=list)
@@ -109,8 +110,10 @@ class CopilotAgentEngine:
 
             # Role Clearance Verification
             if action_spec.required_role == "admin" and user_role != "admin":
+                msg = f"Access Denied: The requested action '{action_spec.name}' requires Administrator clearance. Your current role is '{user_role}'."
                 return CopilotResponse(
-                    message=f"Access Denied: The requested action '{action_spec.name}' requires Administrator clearance. Your current role is '{user_role}'.",
+                    message=msg,
+                    spoken_response=f"Access denied. '{action_spec.name}' requires administrator clearance.",
                     intent="permission_denied",
                     confidence=1.0,
                     is_offline_capable=True,
@@ -122,6 +125,7 @@ class CopilotAgentEngine:
                 prompt = (action_spec.confirmation_prompt or "Please confirm this sensitive operation.").format(**params)
                 return CopilotResponse(
                     message=f"🔒 Confirmation Required: {prompt}",
+                    spoken_response=f"Confirmation required. {prompt} Say confirm or authorize to proceed.",
                     intent=intent,
                     confidence=confidence,
                     requires_user_confirmation=True,
@@ -148,8 +152,10 @@ class CopilotAgentEngine:
         explanation = self._search_local_knowledge(q)
         if explanation:
             recs = personalization_engine.get_personalized_recommendations(user_role, user_display_name)
+            spoken = self._synthesize_spoken_knowledge(q, explanation)
             return CopilotResponse(
                 message=explanation,
+                spoken_response=spoken,
                 intent="explain_concept",
                 confidence=0.92,
                 suggested_routes=["/monitor", "/alerts", "/replay"],
@@ -168,6 +174,7 @@ class CopilotAgentEngine:
                 f"filter alerts, explain detection algorithms (TreeSHAP, C2 jitter, Data Diodes), "
                 f"or inspect active threat dossiers. How can I assist your shift?"
             ),
+            spoken_response=f"Ready for commands, Operator {user_display_name}. You can ask to navigate, filter alerts, inspect threats, or explain security models.",
             intent="general_assistance",
             confidence=0.85,
             suggested_routes=suggested,
@@ -176,13 +183,13 @@ class CopilotAgentEngine:
         )
 
     def _classify_intent(self, q: str, current_route: str) -> tuple[str, float, Optional[str], Dict[str, Any]]:
-        """Deterministic Intent and Entity Matcher."""
-        # 1. Navigation intents
-        if re.search(r"\b(overview|command center|home|dashboard)\b", q):
+        """Deterministic Intent and Entity Matcher supporting rich natural voice variations."""
+        # 1. Navigation & Voice phrases
+        if re.search(r"\b(overview|command center|home|dashboard|main screen|back to main)\b", q):
             return "navigate", 0.95, "navigate_page", {"target_route": "/"}
-        if re.search(r"\b(live monitor|realtime|stream|telemetry feed|flows)\b", q):
+        if re.search(r"\b(live monitor|realtime|stream|telemetry feed|flows|traffic|packets|packet feed)\b", q):
             return "navigate", 0.95, "navigate_page", {"target_route": "/monitor"}
-        if re.search(r"\b(alerts|evidence explorer|alert list|anomalies)\b", q):
+        if re.search(r"\b(alerts|evidence explorer|alert list|anomalies|evidence)\b", q):
             if "export" in q or "cef" in q or "syslog" in q:
                 fmt = "cef" if "cef" in q else "syslog" if "syslog" in q else "stix"
                 return "export_siem", 0.95, "export_siem_telemetry", {"format": fmt}
@@ -191,13 +198,13 @@ class CopilotAgentEngine:
                 tc = "DDOS" if "ddos" in q else "C2_BEACONING" if "c2" in q else "ALL"
                 return "filter_alerts", 0.90, "filter_alerts", {"severity": sev, "threat_class": tc}
             return "navigate", 0.95, "navigate_page", {"target_route": "/alerts"}
-        if re.search(r"\b(incident|incidents|kill chain|dossier|apt)\b", q):
+        if re.search(r"\b(incident|incidents|kill chain|dossier|apt|attacks|attack chain)\b", q):
             return "navigate", 0.95, "navigate_page", {"target_route": "/incidents"}
-        if re.search(r"\b(graph|topology|3d|network graph|nodes)\b", q):
+        if re.search(r"\b(graph|topology|3d|network graph|nodes|topological view)\b", q):
             return "navigate", 0.95, "navigate_page", {"target_route": "/graph"}
-        if re.search(r"\b(threats|threat center|sonar|radar|mitre)\b", q):
+        if re.search(r"\b(threats|threat center|sonar|radar|mitre|threat matrix)\b", q):
             return "navigate", 0.95, "navigate_page", {"target_route": "/threats"}
-        if re.search(r"\b(replay|simulate|attack scenario|simulation)\b", q):
+        if re.search(r"\b(replay|simulate|attack scenario|simulation|inject attack|run simulation|test attack)\b", q):
             scenario = "full_kill_chain"
             if "ddos" in q:
                 scenario = "ddos_syn_flood"
@@ -206,18 +213,18 @@ class CopilotAgentEngine:
             elif "tunnel" in q or "exfil" in q or "dns" in q:
                 scenario = "dns_tunnel_exfil"
             return "simulate_attack", 0.95, "trigger_replay_simulation", {"scenario": scenario}
-        if re.search(r"\b(performance|throughput|latency|wire rate|sla|eps)\b", q):
+        if re.search(r"\b(performance|throughput|latency|wire rate|sla|eps|benchmarks|speed)\b", q):
             return "navigate", 0.95, "navigate_page", {"target_route": "/performance"}
-        if re.search(r"\b(provision user|create user|add user|new account)\b", q):
+        if re.search(r"\b(provision user|create user|add user|new account|register operator)\b", q):
             return "provision_user", 0.95, "provision_user", {}
-        if re.search(r"\b(profile|password|account|clearance)\b", q):
+        if re.search(r"\b(profile|password|account|clearance|my account|credentials)\b", q):
             return "navigate", 0.95, "navigate_page", {"target_route": "/profile"}
-        if re.search(r"\b(settings|preferences|audio|sound|particle density)\b", q):
+        if re.search(r"\b(settings|preferences|audio|sound|particle density|configuration)\b", q):
             return "navigate", 0.95, "navigate_page", {"target_route": "/settings"}
 
-        # 2. Direct telemetry questions
-        if re.search(r"\b(risk score|composite risk|threat posture|status)\b", q):
-            return "telemetry_summary", 0.90, "get_telemetry_summary", {}
+        # 2. Direct telemetry queries (ideal for voice "What is our composite risk?")
+        if re.search(r"\b(risk score|composite risk|threat posture|threat level|system status|station status|how are we doing)\b", q):
+            return "telemetry_summary", 0.92, "get_telemetry_summary", {}
 
         return "unknown", 0.0, None, {}
 
@@ -276,6 +283,7 @@ class CopilotAgentEngine:
             name = route_info.name if route_info else route
             return CopilotResponse(
                 message=f"Navigating to {name} ({route}). State verified.",
+                spoken_response=f"Opening {name}.",
                 intent=intent,
                 confidence=confidence,
                 tool_call=CopilotToolCall(
@@ -302,8 +310,10 @@ class CopilotAgentEngine:
                 f"Station Telemetry Summary: Active Buffered Alerts: {len(alerts)} | "
                 f"Correlated Incidents: {len(incidents)} | Composite Threat Posture Score: {risk:.1f}/100."
             )
+            spoken = f"Composite threat score is {risk:.1f} out of 100 with {len(incidents)} correlated incidents and {len(alerts)} active alerts."
             return CopilotResponse(
                 message=msg,
+                spoken_response=spoken,
                 intent=intent,
                 confidence=confidence,
                 executed_action_result={
@@ -321,6 +331,7 @@ class CopilotAgentEngine:
             tc = params.get("threat_class", "ALL")
             return CopilotResponse(
                 message=f"Opening Alerts Explorer with filters: Severity = '{sev}', Threat Class = '{tc}'.",
+                spoken_response=f"Filtering alerts for {tc} at {sev} severity.",
                 intent=intent,
                 confidence=confidence,
                 tool_call=CopilotToolCall(
@@ -338,6 +349,7 @@ class CopilotAgentEngine:
             scenario = params.get("scenario", "full_kill_chain")
             return CopilotResponse(
                 message=f"Validated & Executed: Injecting synthetic attack simulation '{scenario}' in the Replay Lab. Telemetry will propagate through the 7 detection engines.",
+                spoken_response=f"Simulation {scenario} injected successfully. Telemetry is now streaming to the detection engines.",
                 intent=intent,
                 confidence=confidence,
                 tool_call=CopilotToolCall(
@@ -355,6 +367,7 @@ class CopilotAgentEngine:
             fmt = params.get("format", "cef")
             return CopilotResponse(
                 message=f"Triggering SIEM Export: Generating records formatted in {fmt.upper()} for enterprise SIEM ingestion.",
+                spoken_response=f"Exporting security telemetry in {fmt.upper()} format.",
                 intent=intent,
                 confidence=confidence,
                 tool_call=CopilotToolCall(
@@ -374,6 +387,7 @@ class CopilotAgentEngine:
             disp_name = params.get("display_name", "New Enclave User")
             return CopilotResponse(
                 message=f"Administrator clearance verified: User account '{email}' ({role.upper()}) has been provisioned successfully.",
+                spoken_response=f"User account {email} has been provisioned.",
                 intent=intent,
                 confidence=confidence,
                 tool_call=CopilotToolCall(
@@ -389,6 +403,7 @@ class CopilotAgentEngine:
 
         return CopilotResponse(
             message=f"Action '{action_id}' processed successfully.",
+            spoken_response=f"Action {action_id} completed.",
             intent=intent,
             confidence=confidence,
             executed_action_result={"status": "completed", "action_id": action_id},
@@ -410,6 +425,22 @@ class CopilotAgentEngine:
         if "dga" in q or "dns tunnel" in q or "entropy" in q:
             return self.LOCAL_KNOWLEDGE["dga"]
         return None
+
+    def _synthesize_spoken_knowledge(self, q: str, full_text: str) -> str:
+        """Create a clear, concise spoken explanation suitable for Text-to-Speech."""
+        if "treeshap" in q or "shap" in q or "xai" in q:
+            return "TreeSHAP explains our LightGBM model by calculating exact mathematical feature contributions for each alert."
+        if "diode" in q or "passive" in q:
+            return "A Physical Data Diode is a unidirectional hardware tap that prevents any outbound return-path packet injection."
+        if "kill chain" in q or "incident" in q:
+            return "Correlated incidents track multi-stage cyber attacks across thirty-minute graph windows in Neo4j."
+        if "ddos" in q or "flood" in q:
+            return "The DDoS engine monitors SYN flag velocities and baseline traffic variations in real-time."
+        if "c2" in q or "beacon" in q:
+            return "The C2 engine analyzes packet inter-arrival times and jitter to spot automated heartbeats."
+        if "dga" in q or "dns tunnel" in q:
+            return "The DGA engine detects DNS tunneling by analyzing domain entropy and payload lengths."
+        return full_text.split(". ")[0] + "."
 
 
 copilot_agent = CopilotAgentEngine()

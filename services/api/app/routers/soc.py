@@ -203,9 +203,8 @@ async def replay_scenario_simulation(
 
     from schema.models import (
         EvidenceItem,
-        MitreTechnique,
+        MitreAttack,
         SeverityLevel,
-        ThreatClass,
     )
 
     valid_scenarios = [
@@ -232,7 +231,7 @@ async def replay_scenario_simulation(
             src_ip="192.168.1.105",
             dst_ip="10.0.0.1",
             protocol="TCP",
-            threat_class=ThreatClass.RECONNAISSANCE,
+            threat_class="RECONNAISSANCE",
             severity=SeverityLevel.MEDIUM,
             confidence=0.89,
             risk_score=54.5,
@@ -242,7 +241,7 @@ async def replay_scenario_simulation(
                 EvidenceItem(key="ports_probed", value="64 ports"),
             ],
             mitre=[
-                MitreTechnique(
+                MitreAttack(
                     technique_id="T1046",
                     technique_name="Network Service Discovery",
                 )
@@ -254,7 +253,7 @@ async def replay_scenario_simulation(
             src_ip="192.168.1.105",
             dst_ip="198.51.100.22",
             protocol="TCP",
-            threat_class=ThreatClass.C2_BEACONING,
+            threat_class="C2_BEACONING",
             severity=SeverityLevel.HIGH,
             confidence=0.95,
             risk_score=79.2,
@@ -264,7 +263,7 @@ async def replay_scenario_simulation(
                 EvidenceItem(key="periodicity_score", value="0.96"),
             ],
             mitre=[
-                MitreTechnique(
+                MitreAttack(
                     technique_id="T1071.001",
                     technique_name="Web Protocols",
                 )
@@ -274,19 +273,19 @@ async def replay_scenario_simulation(
             alert_id=f"ALT-EXFIL-{uuid.uuid4().hex[:6].upper()}",
             timestamp=now,
             src_ip="192.168.1.105",
-            dst_ip="198.51.100.22",
+            dst_ip="203.0.113.88",
             protocol="TCP",
-            threat_class=ThreatClass.EXFILTRATION,
+            threat_class="EXFILTRATION",
             severity=SeverityLevel.CRITICAL,
-            confidence=0.98,
+            confidence=0.97,
             risk_score=94.8,
-            title="Asymmetric large-volume outbound exfiltration spike",
+            title="Unusual high-volume data egress to external IP",
             evidence=[
-                EvidenceItem(key="bytes_out_ratio", value="0.994"),
-                EvidenceItem(key="novelty_score", value="1.00"),
+                EvidenceItem(key="bytes_out", value="512 MB"),
+                EvidenceItem(key="shannon_entropy", value="7.94"),
             ],
             mitre=[
-                MitreTechnique(
+                MitreAttack(
                     technique_id="T1048",
                     technique_name="Exfiltration Over Alternative Protocol",
                 )
@@ -294,37 +293,43 @@ async def replay_scenario_simulation(
         )
         simulated_alerts = [a1, a2, a3]
         simulated_incident = Incident(
-            incident_id=f"INC-{now.strftime('%Y%m%d')}-{uuid.uuid4().hex[:4].upper()}",
-            alert_ids=[a.alert_id for a in simulated_alerts],
-            window_start=now,
-            window_end=now,
-            risk_score=92.5,
-            attack_chain="MULTI_STAGE_KILLCHAIN (Recon -> C2 -> Exfiltration)",
-            host="192.168.1.105",
+            incident_id=f"INC-{uuid.uuid4().hex[:6].upper()}",
+            title="Multi-Stage Kill-Chain: Reconnaissance to Data Exfiltration",
+            summary="Coordinated threat campaign starting from internal host 192.168.1.105 scanning perimeter assets, establishing C2 persistence, and exfiltrating encrypted archives.",
+            severity=SeverityLevel.CRITICAL,
+            risk_score=94.8,
+            primary_host_ip="192.168.1.105",
+            target_destination_ips=["10.0.0.1", "198.51.100.22", "203.0.113.88"],
             threat_classes=[
-                ThreatClass.RECONNAISSANCE,
-                ThreatClass.C2_BEACONING,
-                ThreatClass.EXFILTRATION,
+                "RECONNAISSANCE",
+                "C2_BEACONING",
+                "EXFILTRATION",
+            ],
+            alert_ids=[a.alert_id for a in simulated_alerts],
+            mitre_techniques=[
+                MitreAttack(technique_id="T1046", technique_name="Network Service Discovery"),
+                MitreAttack(technique_id="T1071.001", technique_name="Web Protocols"),
+                MitreAttack(technique_id="T1048", technique_name="Exfiltration Over Alternative Protocol"),
             ],
         )
     elif scenario == "ddos_surge":
         a1 = Alert(
             alert_id=f"ALT-DDOS-{uuid.uuid4().hex[:6].upper()}",
             timestamp=now,
-            src_ip="203.0.113.88",
-            dst_ip="10.0.0.5",
+            src_ip="198.51.100.44",
+            dst_ip="10.0.0.50",
             protocol="TCP",
-            threat_class=ThreatClass.DDOS,
-            severity=SeverityLevel.CRITICAL,
-            confidence=0.99,
-            risk_score=98.0,
-            title="Massive TCP SYN Flood Surge: 85,000 pps",
+            threat_class="DDOS",
+            severity=SeverityLevel.HIGH,
+            confidence=0.93,
+            risk_score=88.0,
+            title="Volumetric SYN Flood surge exceeding 50,000 pps baseline",
             evidence=[
-                EvidenceItem(key="packet_rate", value="85000 pps"),
-                EvidenceItem(key="syn_flag_ratio", value="0.99"),
+                EvidenceItem(key="syn_rate", value="52,400 pps"),
+                EvidenceItem(key="baseline_multiplier", value="18.4x"),
             ],
             mitre=[
-                MitreTechnique(
+                MitreAttack(
                     technique_id="T1498.001",
                     technique_name="Direct Network Flood",
                 )
@@ -335,20 +340,20 @@ async def replay_scenario_simulation(
         a1 = Alert(
             alert_id=f"ALT-DGA-{uuid.uuid4().hex[:6].upper()}",
             timestamp=now,
-            src_ip="192.168.1.44",
+            src_ip="192.168.1.77",
             dst_ip="8.8.8.8",
             protocol="UDP",
-            threat_class=ThreatClass.DGA,
+            threat_class="DGA",
             severity=SeverityLevel.HIGH,
-            confidence=0.93,
-            risk_score=81.0,
-            title="Algorithmic Domain Generation Flux (Shannon Entropy 4.42)",
+            confidence=0.91,
+            risk_score=82.4,
+            title="High-entropy pseudo-random domain query series detected (DGA)",
             evidence=[
-                EvidenceItem(key="shannon_entropy", value="4.42"),
-                EvidenceItem(key="ngram_prob", value="0.001"),
+                EvidenceItem(key="domain_entropy", value="4.81"),
+                EvidenceItem(key="failed_nxdomain_rate", value="92%"),
             ],
             mitre=[
-                MitreTechnique(
+                MitreAttack(
                     technique_id="T1568.002",
                     technique_name="Domain Generation Algorithms",
                 )
@@ -362,7 +367,7 @@ async def replay_scenario_simulation(
             src_ip="192.168.1.18",
             dst_ip="203.0.113.200",
             protocol="TCP",
-            threat_class=ThreatClass.EXFILTRATION,
+            threat_class="EXFILTRATION",
             severity=SeverityLevel.HIGH,
             confidence=0.94,
             risk_score=86.5,
@@ -372,7 +377,7 @@ async def replay_scenario_simulation(
                 EvidenceItem(key="destination_novelty", value="0.98"),
             ],
             mitre=[
-                MitreTechnique(
+                MitreAttack(
                     technique_id="T1048",
                     technique_name="Exfiltration Over Alternative Protocol",
                 )
@@ -386,7 +391,7 @@ async def replay_scenario_simulation(
             src_ip="192.168.1.92",
             dst_ip="198.51.100.99",
             protocol="TCP",
-            threat_class=ThreatClass.ENCRYPTED_ANOMALY,
+            threat_class="ENCRYPTED_ANOMALY",
             severity=SeverityLevel.MEDIUM,
             confidence=0.88,
             risk_score=68.0,
@@ -396,7 +401,7 @@ async def replay_scenario_simulation(
                 EvidenceItem(key="tls_entropy", value="7.82"),
             ],
             mitre=[
-                MitreTechnique(
+                MitreAttack(
                     technique_id="T1573.002",
                     technique_name="Asymmetric Cryptography",
                 )

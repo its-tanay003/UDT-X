@@ -17,16 +17,22 @@ import {
   Lock,
   RotateCcw,
   Check,
+  Mic,
+  MicOff,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import { useAuthStore } from "../lib/auth";
 import { useLiveStore } from "../lib/store";
 import { OfflineCopilotEngine } from "../lib/offlineCopilot";
 import type { OfflineActionStage } from "../lib/offlineCopilot";
+import { globalVoiceController, type VoiceState } from "../lib/voiceAgent";
 
 interface CopilotMessage {
   id: string;
   sender: "user" | "copilot";
   text: string;
+  spokenText?: string;
   timestamp: string;
   isOffline?: boolean;
   intent?: string;
@@ -61,28 +67,77 @@ export const CopilotModal: React.FC<{ isOpen: boolean; onClose: () => void }> = 
     {
       id: "init_1",
       sender: "copilot",
-      text: `Greetings Operator ${user?.display_name || "Analyst"}. I am UDT-X Sentinel, your deeply integrated mission-control copilot. You can ask me to navigate between consoles, filter active anomalies, simulate attack vectors, or explain mathematical detection models.`,
+      text: `Greetings Operator ${user?.display_name || "Analyst"}. I am UDT-X Sentinel, your deeply integrated mission-control voice & text copilot. You can speak naturally or type to navigate between consoles, filter active anomalies, simulate attack vectors, or explain mathematical detection models.`,
+      spokenText: `Greetings Operator ${user?.display_name || "Analyst"}. Sentinel copilot standing by.`,
       timestamp: new Date().toLocaleTimeString(),
-      suggestedRoutes: ["/monitor", "/incidents", "/threats", "/replay"],
+      suggestedRoutes: ["/app/monitor", "/app/incidents", "/app/threats", "/app/replay"],
     },
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [stagedActions, setStagedActions] = useState<OfflineActionStage[]>([]);
+  const [voiceState, setVoiceState] = useState<VoiceState>(globalVoiceController.state);
+  const [pendingConfirmation, setPendingConfirmation] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const unsub = globalVoiceController.subscribe((st) => {
+      setVoiceState(st);
+    });
+    return unsub;
+  }, []);
+
+  useEffect(() => {
     setStagedActions(OfflineCopilotEngine.getStagedActions());
+    if (!isOpen) {
+      globalVoiceController.stopListening();
+      globalVoiceController.cancelSpeaking();
+    }
   }, [isOpen]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isLoading]);
+  }, [messages, isLoading, voiceState.interimTranscript]);
 
   if (!isOpen) return null;
 
-  const handleSend = async (customQuery?: string) => {
-    const q = customQuery || input;
-    if (!q.trim()) return;
+  const handleSend = async (customQuery?: string, isFromVoice: boolean = false) => {
+    const q = (customQuery || input).trim();
+    if (!q) return;
+
+    // Check if user is confirming or cancelling a pending action via voice
+    if (pendingConfirmation) {
+      const lower = q.toLowerCase();
+      if (lower.includes("confirm") || lower.includes("authorize") || lower.includes("proceed") || lower.includes("yes")) {
+        setInput("");
+        await handleConfirmAction(pendingConfirmation, isFromVoice);
+        setPendingConfirmation(null);
+        return;
+      }
+      if (lower.includes("cancel") || lower.includes("abort") || lower.includes("no") || lower.includes("stop")) {
+        setInput("");
+        setPendingConfirmation(null);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `usr_${Date.now()}`,
+            sender: "user",
+            text: q,
+            timestamp: new Date().toLocaleTimeString(),
+          },
+          {
+            id: `cop_cancel_${Date.now()}`,
+            sender: "copilot",
+            text: "Sensitive action was cancelled by operator.",
+            spokenText: "Action cancelled.",
+            timestamp: new Date().toLocaleTimeString(),
+          },
+        ]);
+        if (voiceState.voiceTtsEnabled) {
+          globalVoiceController.speak("Action cancelled.");
+        }
+        return;
+      }
+    }
 
     const userMsg: CopilotMessage = {
       id: `usr_${Date.now()}`,
@@ -112,10 +167,12 @@ export const CopilotModal: React.FC<{ isOpen: boolean; onClose: () => void }> = 
 
         if (res.ok) {
           const data = await res.json();
+          const spoken = data.spoken_response || data.message;
           const copilotMsg: CopilotMessage = {
             id: `cop_${Date.now()}`,
             sender: "copilot",
             text: data.message,
+            spokenText: spoken,
             timestamp: new Date().toLocaleTimeString(),
             isOffline: false,
             intent: data.intent,
@@ -127,7 +184,16 @@ export const CopilotModal: React.FC<{ isOpen: boolean; onClose: () => void }> = 
               : undefined,
           };
 
+          if (data.requires_user_confirmation) {
+            setPendingConfirmation(data.confirmation_payload);
+          }
+
           setMessages((prev) => [...prev, copilotMsg]);
+
+          // Trigger voice response if enabled or invoked via voice
+          if (voiceState.voiceTtsEnabled && spoken) {
+            globalVoiceController.speak(spoken);
+          }
 
           // Handle automatic verified client navigation if tool was executed
           if (data.tool_call?.tool_name === "navigate_page" && data.tool_call.target_route) {
@@ -152,10 +218,12 @@ export const CopilotModal: React.FC<{ isOpen: boolean; onClose: () => void }> = 
       location.pathname
     );
 
+    const spoken = offlineRes.spoken_response || offlineRes.message;
     const copilotOfflineMsg: CopilotMessage = {
       id: `cop_${Date.now()}`,
       sender: "copilot",
       text: offlineRes.message,
+      spokenText: spoken,
       timestamp: new Date().toLocaleTimeString(),
       isOffline: true,
       intent: offlineRes.intent,
@@ -166,7 +234,15 @@ export const CopilotModal: React.FC<{ isOpen: boolean; onClose: () => void }> = 
         : undefined,
     };
 
+    if (offlineRes.requires_user_confirmation) {
+      setPendingConfirmation(offlineRes.confirmation_payload);
+    }
+
     setMessages((prev) => [...prev, copilotOfflineMsg]);
+
+    if (voiceState.voiceTtsEnabled && spoken) {
+      globalVoiceController.speak(spoken);
+    }
 
     if (offlineRes.tool_call?.tool_name === "navigate_page" && offlineRes.tool_call.target_route) {
       navigate(offlineRes.tool_call.target_route);
@@ -178,8 +254,10 @@ export const CopilotModal: React.FC<{ isOpen: boolean; onClose: () => void }> = 
     setIsLoading(false);
   };
 
-  const handleConfirmAction = async (payload: any) => {
+  const handleConfirmAction = async (payload: any, isFromVoice: boolean = false) => {
     setIsLoading(true);
+    setPendingConfirmation(null);
+
     if (isConnected && navigator.onLine) {
       try {
         const res = await fetch("http://localhost:8000/copilot/query", {
@@ -201,18 +279,24 @@ export const CopilotModal: React.FC<{ isOpen: boolean; onClose: () => void }> = 
 
         if (res.ok) {
           const data = await res.json();
+          const spoken = data.spoken_response || `Action ${payload.action_id} executed.`;
           setMessages((prev) => [
             ...prev,
             {
               id: `cop_conf_${Date.now()}`,
               sender: "copilot",
               text: data.message,
+              spokenText: spoken,
               timestamp: new Date().toLocaleTimeString(),
               isOffline: false,
               actionResult: data.executed_action_result,
               suggestedRoutes: data.suggested_routes,
             },
           ]);
+
+          if (voiceState.voiceTtsEnabled && spoken) {
+            globalVoiceController.speak(spoken);
+          }
 
           if (payload.target_route) {
             navigate(payload.target_route);
@@ -224,16 +308,22 @@ export const CopilotModal: React.FC<{ isOpen: boolean; onClose: () => void }> = 
     }
 
     // Offline confirmation
+    const offlineSpoken = `Action ${payload.action_id} executed locally.`;
     setMessages((prev) => [
       ...prev,
       {
         id: `cop_conf_${Date.now()}`,
         sender: "copilot",
         text: `Offline Action Confirmed: Executing ${payload.action_id} locally.`,
+        spokenText: offlineSpoken,
         timestamp: new Date().toLocaleTimeString(),
         isOffline: true,
       },
     ]);
+
+    if (voiceState.voiceTtsEnabled) {
+      globalVoiceController.speak(offlineSpoken);
+    }
 
     if (payload.target_route) {
       navigate(payload.target_route);
@@ -241,9 +331,36 @@ export const CopilotModal: React.FC<{ isOpen: boolean; onClose: () => void }> = 
     setIsLoading(false);
   };
 
+  const toggleListening = () => {
+    if (voiceState.isListening) {
+      globalVoiceController.stopListening();
+    } else {
+      globalVoiceController.startListening((transcript, confidence) => {
+        if (confidence < 0.35) {
+          // Low confidence ambiguity check
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `cop_ambig_${Date.now()}`,
+              sender: "copilot",
+              text: "Speech recognition confidence was low. Could you please repeat or clarify your command?",
+              spokenText: "I couldn't hear that clearly. Please repeat your command.",
+              timestamp: new Date().toLocaleTimeString(),
+            },
+          ]);
+          if (voiceState.voiceTtsEnabled) {
+            globalVoiceController.speak("I couldn't hear that clearly. Please repeat your command.");
+          }
+          return;
+        }
+        handleSend(transcript, true);
+      });
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-[#0B1220]/80 backdrop-blur-md animate-fade-in font-mono">
-      <div className="w-full max-w-2xl h-[620px] rounded-2xl bg-[#131B2E] border border-[#3FC7D4]/30 shadow-[0_0_50px_rgba(63,199,212,0.2)] flex flex-col overflow-hidden relative">
+      <div className="w-full max-w-2xl h-[640px] rounded-2xl bg-[#131B2E] border border-[#3FC7D4]/30 shadow-[0_0_50px_rgba(63,199,212,0.2)] flex flex-col overflow-hidden relative">
         {/* Modal Top Banner */}
         <div className="p-4 bg-[#0B1220] border-b border-[#3FC7D4]/20 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
@@ -266,19 +383,38 @@ export const CopilotModal: React.FC<{ isOpen: boolean; onClose: () => void }> = 
                     <span>OFFLINE RAG</span>
                   </span>
                 )}
+                <span className="px-2 py-0.5 rounded text-[10px] bg-[#3FC7D4]/15 border border-[#3FC7D4]/30 text-[#3FC7D4] font-bold flex items-center gap-1">
+                  <Mic className="w-3 h-3" />
+                  <span>VOICE ACTIVE</span>
+                </span>
               </div>
               <p className="text-[10px] text-[#8A95AA]">
-                AI-Native Autonomous Enclave Navigator & Telemetry Agent
+                Voice & Text Autonomous Enclave Copilot & Telemetry Agent
               </p>
             </div>
           </div>
 
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg bg-[#131B2E] border border-[#3FC7D4]/20 text-[#8A95AA] hover:text-[#E7ECF5] hover:border-[#3FC7D4] transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            {/* TTS Voice Toggle */}
+            <button
+              onClick={() => globalVoiceController.setTtsEnabled(!voiceState.voiceTtsEnabled)}
+              title={voiceState.voiceTtsEnabled ? "Disable Voice Output (Mute)" : "Enable Voice Output (TTS)"}
+              className={`p-1.5 rounded-lg border transition-colors ${
+                voiceState.voiceTtsEnabled
+                  ? "bg-[#3FC7D4]/20 border-[#3FC7D4]/50 text-[#3FC7D4]"
+                  : "bg-[#131B2E] border-[#3FC7D4]/20 text-[#8A95AA] hover:text-[#E7ECF5]"
+              }`}
+            >
+              {voiceState.voiceTtsEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            </button>
+
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-lg bg-[#131B2E] border border-[#3FC7D4]/20 text-[#8A95AA] hover:text-[#E7ECF5] hover:border-[#3FC7D4] transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Messages Stream Body */}
@@ -294,6 +430,15 @@ export const CopilotModal: React.FC<{ isOpen: boolean; onClose: () => void }> = 
                 <span>{m.timestamp}</span>
                 {m.isOffline && (
                   <span className="text-[#FF8A3D] font-bold">[OFFLINE RAG]</span>
+                )}
+                {m.sender === "copilot" && voiceState.voiceTtsEnabled && (
+                  <button
+                    onClick={() => m.spokenText && globalVoiceController.speak(m.spokenText)}
+                    title="Replay Voice Audio"
+                    className="hover:text-[#3FC7D4] transition-colors"
+                  >
+                    <Volume2 className="w-3 h-3 inline" />
+                  </button>
                 )}
               </div>
 
@@ -323,6 +468,24 @@ export const CopilotModal: React.FC<{ isOpen: boolean; onClose: () => void }> = 
                       >
                         <Check className="w-3.5 h-3.5" />
                         <span>AUTHORIZE & EXECUTE</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setPendingConfirmation(null);
+                          setMessages((prev) => [
+                            ...prev,
+                            {
+                              id: `cop_cancel_${Date.now()}`,
+                              sender: "copilot",
+                              text: "Operation cancelled by operator.",
+                              spokenText: "Operation cancelled.",
+                              timestamp: new Date().toLocaleTimeString(),
+                            },
+                          ]);
+                        }}
+                        className="px-3 py-1 rounded bg-[#131B2E] border border-[#FF8A3D]/30 text-[#8A95AA] hover:text-[#E7ECF5] text-[11px]"
+                      >
+                        Cancel
                       </button>
                     </div>
                   </div>
@@ -387,12 +550,37 @@ export const CopilotModal: React.FC<{ isOpen: boolean; onClose: () => void }> = 
               <span>Sentinel evaluating telemetry context & permissions...</span>
             </div>
           )}
+
+          {/* Realtime Live Speech Waveform & Interim Transcription Banner */}
+          {voiceState.isListening && (
+            <div className="p-3 rounded-xl bg-[#3FC7D4]/10 border border-[#3FC7D4]/40 flex items-center gap-3 animate-pulse">
+              <div className="flex items-center gap-1">
+                <span className="w-1 h-3 bg-[#3FC7D4] rounded-full animate-bounce" />
+                <span className="w-1 h-5 bg-[#3FC7D4] rounded-full animate-bounce [animation-delay:0.15s]" />
+                <span className="w-1 h-4 bg-[#3FC7D4] rounded-full animate-bounce [animation-delay:0.3s]" />
+                <span className="w-1 h-6 bg-[#3FC7D4] rounded-full animate-bounce [animation-delay:0.45s]" />
+              </div>
+              <div className="flex-1">
+                <div className="text-[10px] font-bold text-[#3FC7D4]">LISTENING FOR VOICE COMMAND...</div>
+                <div className="text-xs text-[#E7ECF5] italic">
+                  {voiceState.interimTranscript || "Speak now (e.g. 'Open live monitor', 'Explain TreeSHAP math')..."}
+                </div>
+              </div>
+              <button
+                onClick={() => globalVoiceController.stopListening()}
+                className="px-2 py-1 rounded bg-[#FF4757]/20 border border-[#FF4757]/40 text-[#FF4757] text-[10px] font-bold"
+              >
+                Stop
+              </button>
+            </div>
+          )}
+
           <div ref={messagesEndRef} />
         </div>
 
         {/* Bottom Suggested Prompt Quick Chips */}
         <div className="px-4 py-2 bg-[#0B1220]/70 border-t border-[#3FC7D4]/10 flex flex-wrap items-center gap-2 text-[10px]">
-          <span className="text-[#8A95AA]">QUICK PROMPTS:</span>
+          <span className="text-[#8A95AA]">VOICE / TEXT CHIPS:</span>
           {[
             "Take me to Live Monitor",
             "Show critical alerts",
@@ -410,8 +598,21 @@ export const CopilotModal: React.FC<{ isOpen: boolean; onClose: () => void }> = 
           ))}
         </div>
 
-        {/* Input Textarea Bar */}
+        {/* Input Textarea & Voice Microphone Bar */}
         <div className="p-3 bg-[#0B1220] border-t border-[#3FC7D4]/20 flex items-center gap-2">
+          {/* Push-to-Talk Microphone Button */}
+          <button
+            onClick={toggleListening}
+            title={voiceState.isListening ? "Stop Listening" : "Start Voice Command"}
+            className={`p-2.5 rounded-xl border transition-all flex items-center justify-center shrink-0 ${
+              voiceState.isListening
+                ? "bg-[#FF4757] border-[#FF4757] text-white shadow-[0_0_15px_rgba(255,71,87,0.5)] animate-pulse"
+                : "bg-[#131B2E] hover:bg-[#1B2540] border-[#3FC7D4]/30 text-[#3FC7D4] hover:border-[#3FC7D4]"
+            }`}
+          >
+            {voiceState.isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+          </button>
+
           <input
             type="text"
             value={input}
@@ -422,7 +623,11 @@ export const CopilotModal: React.FC<{ isOpen: boolean; onClose: () => void }> = 
                 handleSend();
               }
             }}
-            placeholder="Ask Sentinel (e.g., 'Open live stream', 'Simulate attack', 'Explain data diode')..."
+            placeholder={
+              voiceState.isListening
+                ? "Listening to voice input..."
+                : "Ask Sentinel or click mic (e.g., 'Open live stream', 'Simulate attack', 'Explain data diode')..."
+            }
             className="flex-1 bg-[#131B2E] border border-[#3FC7D4]/25 rounded-xl px-3.5 py-2.5 text-xs text-[#E7ECF5] placeholder-[#8A95AA]/60 focus:outline-none focus:border-[#3FC7D4]"
           />
           <button

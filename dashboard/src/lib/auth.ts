@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 
 export interface User {
   id: string;
@@ -73,41 +74,43 @@ const DEFAULT_SETTINGS: UserSettings = {
   },
 };
 
-export const useAuthStore = create<AuthState>((set, get) => ({
-  user: null,
-  accessToken: null,
-  settings: DEFAULT_SETTINGS,
-  isLoading: false,
-  isThrottled: false,
-  throttleSeconds: 0,
-  tourActive: false,
-  tourStepIndex: 0,
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set, get) => ({
+      user: null,
+      accessToken: null,
+      settings: DEFAULT_SETTINGS,
+      isLoading: false,
+      isThrottled: false,
+      throttleSeconds: 0,
+      tourActive: false,
+      tourStepIndex: 0,
 
-  setAuth: (user, token) => {
-    set({ user, accessToken: token });
-    get().fetchSettings();
-    if (!user.has_completed_tour) {
-      set({ tourActive: true, tourStepIndex: 0 });
-    }
-  },
+      setAuth: (user, token) => {
+        set({ user, accessToken: token });
+        get().fetchSettings();
+        if (!user.has_completed_tour) {
+          set({ tourActive: true, tourStepIndex: 0 });
+        }
+      },
 
-  setToken: (token) => set({ accessToken: token }),
+      setToken: (token) => set({ accessToken: token }),
 
-  logout: async () => {
-    try {
-      await fetch("http://localhost:8000/auth/logout", { method: "POST" });
-    } catch (e) {
-      console.debug("Logout cleanup error:", e);
-    }
-    set({ user: null, accessToken: null, tourActive: false });
-  },
+      logout: async () => {
+        try {
+          await fetch("http://localhost:8000/auth/logout", { method: "POST" });
+        } catch (e) {
+          console.debug("Logout cleanup error:", e);
+        }
+        set({ user: null, accessToken: null, tourActive: false });
+      },
 
-  updateUser: (partial) =>
-    set((state) => ({
-      user: state.user ? { ...state.user, ...partial } : null,
-    })),
+      updateUser: (partial) =>
+        set((state) => ({
+          user: state.user ? { ...state.user, ...partial } : null,
+        })),
 
-  setSettings: (settings) => set({ settings }),
+      setSettings: (settings) => set({ settings }),
 
   updateSettingsField: (category, fields) => {
     const updated = {
@@ -208,7 +211,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
     }
   },
-}));
+}),
+{
+  name: "udtx_auth_store",
+  storage: createJSONStorage(() => localStorage),
+  partialize: (state) => ({
+    user: state.user,
+    accessToken: state.accessToken,
+    settings: state.settings,
+  }),
+}
+)
+);
 
 /**
  * Authenticated API Fetch client with 429 rate limit detection and 401 transparent token refresh.

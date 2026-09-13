@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.7.0] - 2026-09-12
+
+### 🎙️ Intelligent Voice Command & Natural Speech Control System
+- **Zero-Bypass Spoken Input Pipeline:**
+  - Integrated full end-to-end voice control workflow: `Voice Input -> Speech Recognition -> Prompt Injection Sanitization -> Confidence Filter -> Intent Detection -> Role Permission Check -> Action Selection & Confirmation Gate -> Execution -> State Verification -> Response Generation -> Text-to-Speech Synthesis`.
+  - Enforced fundamental security invariant: `Voice Command = Text Command = Same Authorization & Permission Engine`. Spoken commands can never bypass clearance levels or execute unauthorized actions.
+- **Natural Language Voice Understanding (`agent_engine.py` & `offlineCopilot.ts`):**
+  - Added support for flexible, natural spoken phrasing, multi-step voice navigation ("Open live traffic flows", "What is our composite risk?"), and natural question phrasing without requiring rigid commands.
+  - Implemented concise speech synthesis summaries (`spoken_response`) tailored for low-latency operational audio output.
+- **Frontend Web Speech STT/TTS Engine (`voiceAgent.ts`):**
+  - Cross-browser Web Speech API integration (`SpeechRecognition` & `SpeechSynthesis`) supporting push-to-talk, live audio visualizer waveforms, real-time interim transcript rendering, and low-confidence ambiguity prompts.
+  - Added built-in voice prompt injection filter stripping known jailbreak keywords before copilot dispatch.
+  - Supported operational voice confirmation workflow: speaking *"Confirm"* or *"Authorize"* executes pending sensitive operations; speaking *"Cancel"* or *"Abort"* aborts safely.
+- **Air-Gapped & Offline Voice Mode:**
+  - Full local voice command processing, cached telemetry queries, local RAG security explanations (TreeSHAP, Data Diodes, C2 jitter), and in-browser navigation when offline.
+- **Global Mission Control Voice Hotkeys:**
+  - Added `Ctrl + Shift + V` instant voice toggle alongside persistent microphone controls in `CopilotModal.tsx`.
+- **Automated Verification:**
+  - Created `tests/test_voice_copilot.py` validating spoken navigation, permission enforcement, simulation gates, and audio summary synthesis.
+
+---
+
 ## [1.6.0] - 2026-09-11
 
 ### 🌐 Public Surface, DPDP Act Compliance & Accessibility Overhaul

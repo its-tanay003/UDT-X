@@ -168,12 +168,17 @@ docker compose ps
 
 ## 🧪 Automated Testing & Adversarial Red-Team Verification
 
-Run the comprehensive pytest test suite covering all 14 platform phases and the 40-dimension AI Agent Adversarial Red-Team Matrix:
+Run the comprehensive pytest test suite covering all 14 platform phases, AI Agent Adversarial Matrix, and Voice Copilot subsystem:
 ```powershell
 .venv\Scripts\python -m pytest -v
 ```
 ```text
-======================= 157 passed, 2 warnings in 19.70s =======================
+======================= 162 passed, 2 warnings in 22.35s =======================
+```
+
+Run the specialized Voice Copilot test suite:
+```powershell
+.venv\Scripts\python -m pytest tests/test_voice_copilot.py -v
 ```
 
 Run the specialized AI Agent Adversarial & Red-Team verification suite:
