@@ -49,9 +49,9 @@ export const IncidentDetailPage: React.FC = () => {
           title="NO INCIDENT SELECTED"
           description="Please select a correlated multi-stage incident from the Security Incidents Dossier or Security Command Center to inspect its chronological kill-chain progression."
           actionLabel="BROWSE ALL INCIDENTS →"
-          actionTo="/incidents"
+          actionTo="/app/incidents"
           secondaryActionLabel="VIEW LIVE MONITOR"
-          secondaryActionTo="/monitor"
+          secondaryActionTo="/app/monitor"
           variant="warn"
         />
       </div>
@@ -166,7 +166,7 @@ export const IncidentDetailPage: React.FC = () => {
                 title="NO MEMBER ALERTS BUFFERED"
                 description="The individual alerts for this incident were logged before the current session buffer or have been archived."
                 actionLabel="VIEW LIVE ALERTS"
-                actionTo="/alerts"
+                actionTo="/app/alerts"
               />
             )}
           </div>
@@ -175,8 +175,9 @@ export const IncidentDetailPage: React.FC = () => {
         {/* Right Column: Correlated Asset & Root Cause */}
         <div className="lg:col-span-5 space-y-4">
           <div className="p-5 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/15 space-y-4">
-            <h3 className="text-xs font-mono font-bold text-[#8A95AA] uppercase tracking-wider">
-              CORRELATION HEURISTICS
+            <h3 className="text-xs font-mono font-bold text-[#8A95AA] uppercase tracking-wider flex items-center gap-2">
+              <ShieldAlert className="w-4 h-4 text-[#3FC7D4]" />
+              <span>CORRELATION HEURISTICS</span>
             </h3>
 
             <div className="p-3 rounded-lg bg-[#0B1220] border border-[#3FC7D4]/20 space-y-2 font-mono text-xs">
@@ -208,14 +209,14 @@ export const IncidentDetailPage: React.FC = () => {
 
             <div className="pt-2 flex flex-col gap-2">
               <Link
-                to="/graph"
+                to="/app/graph"
                 className="w-full text-center py-2 rounded-lg bg-[#3FC7D4]/15 border border-[#3FC7D4]/30 text-[#3FC7D4] font-mono text-xs font-bold hover:bg-[#3FC7D4]/25 transition-all flex items-center justify-center gap-1.5"
               >
                 <Network className="w-3.5 h-3.5" />
                 <span>INSPECT IN 3D NETWORK GRAPH →</span>
               </Link>
               <Link
-                to="/incidents"
+                to="/app/incidents"
                 className="w-full text-center py-2 rounded-lg bg-[#0B1220] border border-[#3FC7D4]/20 text-[#8A95AA] hover:text-[#E7ECF5] font-mono text-xs transition-colors"
               >
                 ← BACK TO INCIDENTS DOSSIER

@@ -31,7 +31,7 @@ export interface InteractiveTourStep {
 
 export const INTERACTIVE_TOUR_STEPS: InteractiveTourStep[] = [
   {
-    route: "/",
+    route: "/app",
     targetId: "tour-rail",
     locationLabel: "LEFT CONSOLE RAIL // PERSISTENT NAVIGATION",
     title: "1. Tactical Console Rail & Data Diode Sensor",
@@ -48,7 +48,7 @@ export const INTERACTIVE_TOUR_STEPS: InteractiveTourStep[] = [
     ],
   },
   {
-    route: "/",
+    route: "/app",
     targetId: "tour-kpis",
     locationLabel: "SECURITY OVERVIEW // TOP METRIC CARDS",
     title: "2. Key Performance Indicators & Ingestion Wire Rates",
@@ -66,7 +66,7 @@ export const INTERACTIVE_TOUR_STEPS: InteractiveTourStep[] = [
     ],
   },
   {
-    route: "/",
+    route: "/app",
     targetId: "tour-sphere-panel",
     locationLabel: "SECURITY OVERVIEW // 3D PERIMETER",
     title: "3. 3D Ambient Listening Sphere",
@@ -83,7 +83,7 @@ export const INTERACTIVE_TOUR_STEPS: InteractiveTourStep[] = [
     ],
   },
   {
-    route: "/",
+    route: "/app",
     targetId: "tour-risk-panel",
     locationLabel: "SECURITY OVERVIEW // COMPOSITE POSTURE",
     title: "4. Composite Threat Risk Posture Ring",
@@ -99,7 +99,7 @@ export const INTERACTIVE_TOUR_STEPS: InteractiveTourStep[] = [
     ],
   },
   {
-    route: "/monitor",
+    route: "/app/monitor",
     targetId: "tour-live-filters",
     locationLabel: "LIVE MONITOR // FILTER & SEARCH BAR",
     title: "5. Telemetry Filter & Forensic Search Bar",
@@ -116,7 +116,7 @@ export const INTERACTIVE_TOUR_STEPS: InteractiveTourStep[] = [
     ],
   },
   {
-    route: "/monitor",
+    route: "/app/monitor",
     targetId: "tour-live-table",
     locationLabel: "LIVE MONITOR // TELEMETRY FEED",
     title: "6. Zero-Refresh Live Telemetry Feed",
@@ -133,7 +133,7 @@ export const INTERACTIVE_TOUR_STEPS: InteractiveTourStep[] = [
     ],
   },
   {
-    route: "/incidents/INC-2026-0831-01",
+    route: "/app/incidents/INC-2026-0831-01",
     targetId: "tour-incident-timeline",
     locationLabel: "INCIDENT DOSSIER // TEMPORAL GRAPH",
     title: "7. Incident Dossier & Kill-Chain Progression",
@@ -150,7 +150,7 @@ export const INTERACTIVE_TOUR_STEPS: InteractiveTourStep[] = [
     ],
   },
   {
-    route: "/alerts/ALT-001/evidence",
+    route: "/app/alerts/ALT-001/evidence",
     targetId: "tour-evidence-meters",
     locationLabel: "EVIDENCE EXPLORER // HEURISTIC METERS",
     title: "8. Statistical Evidence & Entropy Meters",
@@ -167,7 +167,7 @@ export const INTERACTIVE_TOUR_STEPS: InteractiveTourStep[] = [
     ],
   },
   {
-    route: "/alerts/ALT-001/evidence",
+    route: "/app/alerts/ALT-001/evidence",
     targetId: "tour-evidence-shap",
     locationLabel: "EVIDENCE EXPLORER // EXPLAINABLE AI",
     title: "9. TreeSHAP Feature Attributions",
@@ -184,7 +184,7 @@ export const INTERACTIVE_TOUR_STEPS: InteractiveTourStep[] = [
     ],
   },
   {
-    route: "/graph",
+    route: "/app/graph",
     targetId: "tour-graph-canvas",
     locationLabel: "NETWORK GRAPH // 3D ORBITAL CANVAS",
     title: "10. 3D Evidence Graph & Node Inspector",
@@ -201,7 +201,7 @@ export const INTERACTIVE_TOUR_STEPS: InteractiveTourStep[] = [
     ],
   },
   {
-    route: "/threats",
+    route: "/app/threats",
     targetId: "tour-sonar-chart",
     locationLabel: "THREAT CENTER // D3 RADAR SWEEP",
     title: "11. Threat Center & D3 Radial Sonar Sweep",
@@ -218,7 +218,7 @@ export const INTERACTIVE_TOUR_STEPS: InteractiveTourStep[] = [
     ],
   },
   {
-    route: "/replay",
+    route: "/app/replay",
     targetId: "tour-replay-console",
     locationLabel: "REPLAY LAB // ATTACK SIMULATOR",
     title: "12. Replay Lab Scenario Simulator",
@@ -235,7 +235,7 @@ export const INTERACTIVE_TOUR_STEPS: InteractiveTourStep[] = [
     ],
   },
   {
-    route: "/performance",
+    route: "/app/performance",
     targetId: "tour-perf-charts",
     locationLabel: "PERFORMANCE // SLA TELEMETRY",
     title: "13. SLA Telemetry & Latency Percentiles",
@@ -252,7 +252,7 @@ export const INTERACTIVE_TOUR_STEPS: InteractiveTourStep[] = [
     ],
   },
   {
-    route: "/settings",
+    route: "/app/settings",
     targetId: "tour-settings-panel",
     locationLabel: "STATION SETTINGS // PREFERENCES",
     title: "14. Server-Persisted Settings & Accessibility",
@@ -290,7 +290,10 @@ export const TourGuide: React.FC = () => {
 
   // Auto-navigate to the step's designated route so the user sees the real page
   useEffect(() => {
-    if (tourActive && currentStep && location.pathname !== currentStep.route) {
+    if (!tourActive || !currentStep) return;
+    const normCurrent = location.pathname.replace(/\/+$/, "") || "/";
+    const normTarget = currentStep.route.replace(/\/+$/, "") || "/";
+    if (normCurrent !== normTarget) {
       navigate(currentStep.route);
     }
   }, [tourActive, tourStepIndex, currentStep, location.pathname, navigate]);

@@ -260,6 +260,32 @@ function SphereScene({
   );
 }
 
+interface ErrorBoundaryState {
+  hasError: boolean;
+}
+
+class WebGLErrorBoundary extends React.Component<{ fallback: React.ReactNode; children: React.ReactNode }, ErrorBoundaryState> {
+  constructor(props: { fallback: React.ReactNode; children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: any) {
+    console.warn("[UDT-X WebGL Engine] Gracefully captured Three.js canvas exception:", error);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback;
+    }
+    return this.props.children;
+  }
+}
+
 export const ListeningSphere: React.FC<ListeningSphereProps> = ({
   nodes = [],
   edges = [],
@@ -283,6 +309,14 @@ export const ListeningSphere: React.FC<ListeningSphereProps> = ({
     return () => observer.disconnect();
   }, []);
 
+  const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (containerRef.current) {
+      setContainerEl(containerRef.current);
+    }
+  }, []);
+
   // Compute effective density (user settings > prop > narrow screen step down)
   const effectiveDensity: "low" | "high" = useMemo(() => {
     if (userDensity === "off") return "low";
@@ -295,91 +329,105 @@ export const ListeningSphere: React.FC<ListeningSphereProps> = ({
     typeof window !== "undefined" &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  if (prefersReducedMotion || userDensity === "off") {
-    return (
-      <div
-        ref={containerRef}
-        className="w-full flex flex-col items-center justify-center bg-[#0B1220] border border-[#3FC7D4]/20 rounded-xl p-6 relative overflow-hidden"
-        style={{ height }}
-      >
-        <div className="w-28 sm:w-32 h-28 sm:h-32 rounded-full border-2 border-dashed border-[#3FC7D4]/40 flex items-center justify-center relative">
-          <div className="w-4 h-4 rounded-full bg-[#3FC7D4] shadow-[0_0_12px_#3FC7D4]" />
-          {nodes.some((n) => n.severity === "critical" || (n.risk && n.risk > 85)) && (
-            <div className="absolute top-2 right-4 w-3 h-3 rounded-full bg-[#FF4757] animate-ping" />
-          )}
-        </div>
-        <p className="text-xs font-mono text-[#8A95AA] mt-4 uppercase tracking-wider text-center">
-          Passive Listening Perimeter (Static 2D Mode)
-        </p>
+  const fallbackView = (
+    <div
+      ref={containerRef}
+      className="w-full flex flex-col items-center justify-center bg-[#0B1220] border border-[#3FC7D4]/20 rounded-xl p-6 relative overflow-hidden"
+      style={{ height }}
+    >
+      <div className="w-28 sm:w-32 h-28 sm:h-32 rounded-full border-2 border-dashed border-[#3FC7D4]/40 flex items-center justify-center relative">
+        <div className="w-4 h-4 rounded-full bg-[#3FC7D4] shadow-[0_0_12px_#3FC7D4]" />
+        {nodes.some((n) => n.severity === "critical" || (n.risk && n.risk > 85)) && (
+          <div className="absolute top-2 right-4 w-3 h-3 rounded-full bg-[#FF4757] animate-ping" />
+        )}
       </div>
-    );
+      <p className="text-xs font-mono text-[#8A95AA] mt-4 uppercase tracking-wider text-center">
+        Passive Listening Perimeter (Static 2D Mode)
+      </p>
+    </div>
+  );
+
+  if (prefersReducedMotion || userDensity === "off") {
+    return fallbackView;
   }
 
   const isEmpty = nodes.length === 0;
 
   return (
-    <div
-      ref={containerRef}
-      role="region"
-      aria-label="3D Ambient Listening Sphere: Real-time passive optical data-diode network topology and telemetry flows"
-      tabIndex={0}
-      className="w-full relative rounded-xl overflow-hidden border border-[#3FC7D4]/15 bg-[#0B1220] focus:ring-2 focus:ring-[#3FC7D4] focus:outline-none"
-      style={{ height }}
-    >
-      {/* Background Sonar Grid Overlay */}
-      <div className="absolute inset-0 pointer-events-none z-10 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(11,18,32,0.65)_100%)]" />
-
-      {/* Empty State Banner if no telemetry nodes exist yet */}
-      {isEmpty && (
-        <div className="absolute top-4 left-4 z-20 pointer-events-none flex items-center gap-2 font-mono text-xs text-[#8A95AA]">
-          <span className="w-2 h-2 rounded-full bg-[#3FC7D4]" />
-          <span>PERIMETER NOMINAL // NO ACTIVE TELEMETRY DETECTED</span>
-        </div>
-      )}
-
-      <Canvas
-        resize={{ scroll: false, debounce: { scroll: 50, resize: 0 } }}
-        camera={{ position: [0, 0, 4.3], fov: 45 }}
+    <WebGLErrorBoundary fallback={fallbackView}>
+      <div
+        ref={containerRef}
+        role="region"
+        aria-label="3D Ambient Listening Sphere: Real-time passive optical data-diode network topology and telemetry flows"
+        tabIndex={0}
+        className="w-full relative rounded-xl overflow-hidden border border-[#3FC7D4]/15 bg-[#0B1220] focus:ring-2 focus:ring-[#3FC7D4] focus:outline-none"
+        style={{ height }}
       >
-        <ambientLight intensity={0.4} />
-        {/* Soft directional & rim lighting for physical depth */}
-        <directionalLight position={[5, 8, 5]} intensity={0.9} color="#E7ECF5" />
-        <pointLight position={[-6, -4, -4]} intensity={0.5} color="#3FC7D4" />
+        {/* Background Sonar Grid Overlay */}
+        <div className="absolute inset-0 pointer-events-none z-10 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(11,18,32,0.65)_100%)]" />
 
-        <SphereScene
-          nodes={nodes}
-          edges={edges}
-          density={effectiveDensity}
-          onNodeClick={onNodeClick}
-        />
-
-        {/* Postprocessing Bloom Pass */}
-        <EffectComposer>
-          <Bloom
-            luminanceThreshold={0.25}
-            luminanceSmoothing={0.9}
-            intensity={1.2}
-            mipmapBlur
-          />
-        </EffectComposer>
-
-        {interactive && (
-          <OrbitControls
-            enablePan={false}
-            minDistance={2.4}
-            maxDistance={7.5}
-            autoRotate={false}
-          />
+        {/* Empty State Banner if no telemetry nodes exist yet */}
+        {isEmpty && (
+          <div className="absolute top-4 left-4 z-20 pointer-events-none flex items-center gap-2 font-mono text-xs text-[#8A95AA]">
+            <span className="w-2 h-2 rounded-full bg-[#3FC7D4]" />
+            <span>PERIMETER NOMINAL // NO ACTIVE TELEMETRY DETECTED</span>
+          </div>
         )}
-      </Canvas>
 
-      {/* Bottom Status Tag */}
-      <div className="absolute bottom-2.5 left-3 z-20 pointer-events-none flex items-center gap-2">
-        <span className="w-2 h-2 rounded-full bg-[#3FC7D4] animate-pulse" />
-        <span className="text-[10px] font-mono text-[#8A95AA] uppercase tracking-widest truncate">
-          Passive Tap // Inward Arcs ({nodes.length} Nodes / {edges.length} Flows)
-        </span>
+        {containerEl && (
+          <Canvas
+            gl={{
+              powerPreference: "high-performance",
+              antialias: true,
+              alpha: true,
+              failIfMajorPerformanceCaveat: false,
+            }}
+            resize={{ scroll: false, debounce: { scroll: 50, resize: 0 } }}
+            camera={{ position: [0, 0, 4.3], fov: 45 }}
+            eventSource={containerEl}
+            eventPrefix="client"
+          >
+            <ambientLight intensity={0.4} />
+            {/* Soft directional & rim lighting for physical depth */}
+            <directionalLight position={[5, 8, 5]} intensity={0.9} color="#E7ECF5" />
+            <pointLight position={[-6, -4, -4]} intensity={0.5} color="#3FC7D4" />
+
+            <SphereScene
+              nodes={nodes}
+              edges={edges}
+              density={effectiveDensity}
+              onNodeClick={onNodeClick}
+            />
+
+            {/* Postprocessing Bloom Pass */}
+            <EffectComposer>
+              <Bloom
+                luminanceThreshold={0.25}
+                luminanceSmoothing={0.9}
+                intensity={1.2}
+                mipmapBlur
+              />
+            </EffectComposer>
+
+            {interactive && (
+              <OrbitControls
+                enablePan={false}
+                minDistance={2.4}
+                maxDistance={7.5}
+                autoRotate={false}
+              />
+            )}
+          </Canvas>
+        )}
+
+        {/* Bottom Status Tag */}
+        <div className="absolute bottom-2.5 left-3 z-20 pointer-events-none flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-[#3FC7D4] animate-pulse" />
+          <span className="text-[10px] font-mono text-[#8A95AA] uppercase tracking-widest truncate">
+            Passive Tap // Inward Arcs ({nodes.length} Nodes / {edges.length} Flows)
+          </span>
+        </div>
       </div>
-    </div>
+    </WebGLErrorBoundary>
   );
 };

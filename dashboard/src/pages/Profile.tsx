@@ -208,8 +208,10 @@ export const ProfilePage: React.FC = () => {
             {/* Edit Identity Form */}
             <form onSubmit={handleUpdateIdentity} className="space-y-3 font-mono text-xs">
               <div>
-                <label className="text-[#8A95AA] text-[10px] uppercase">Display Name</label>
+                <label htmlFor="profile-display-name" className="text-[#8A95AA] text-[10px] uppercase">Display Name</label>
                 <input
+                  id="profile-display-name"
+                  name="displayName"
                   type="text"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
@@ -217,9 +219,11 @@ export const ProfilePage: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="text-[#8A95AA] text-[10px] uppercase">Enclave Email Address</label>
+                <label htmlFor="profile-email" className="text-[#8A95AA] text-[10px] uppercase">Enclave Email Address</label>
                 <input
-                  type="text"
+                  id="profile-email"
+                  name="email"
+                  type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full mt-1 px-3 py-2 rounded-lg bg-[#0B1220] border border-[#3FC7D4]/20 text-[#E7ECF5] focus:outline-none focus:border-[#3FC7D4]"
@@ -271,8 +275,10 @@ export const ProfilePage: React.FC = () => {
 
             <form onSubmit={handleChangePassword} className="space-y-3 font-mono text-xs">
               <div>
-                <label className="text-[#8A95AA] text-[10px] uppercase">Current Password</label>
+                <label htmlFor="current-password" className="text-[#8A95AA] text-[10px] uppercase">Current Password</label>
                 <input
+                  id="current-password"
+                  name="currentPassword"
                   type="password"
                   required
                   autoComplete="current-password"
@@ -282,8 +288,10 @@ export const ProfilePage: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="text-[#8A95AA] text-[10px] uppercase">New Password (min 8 characters)</label>
+                <label htmlFor="new-password" className="text-[#8A95AA] text-[10px] uppercase">New Password (min 8 characters)</label>
                 <input
+                  id="new-password"
+                  name="newPassword"
                   type="password"
                   required
                   minLength={8}
@@ -294,8 +302,10 @@ export const ProfilePage: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="text-[#8A95AA] text-[10px] uppercase">Confirm New Password</label>
+                <label htmlFor="confirm-password" className="text-[#8A95AA] text-[10px] uppercase">Confirm New Password</label>
                 <input
+                  id="confirm-password"
+                  name="confirmPassword"
                   type="password"
                   required
                   autoComplete="new-password"
@@ -328,9 +338,11 @@ export const ProfilePage: React.FC = () => {
               <form onSubmit={handleProvisionAnalyst} className="space-y-3 font-mono text-xs">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-[#8A95AA] text-[10px] uppercase">Analyst Email</label>
+                    <label htmlFor="prov-email" className="text-[#8A95AA] text-[10px] uppercase">Analyst Email</label>
                     <input
-                      type="text"
+                      id="prov-email"
+                      name="provEmail"
+                      type="email"
                       required
                       autoComplete="off"
                       placeholder="analyst2@udtx.local"
@@ -340,8 +352,10 @@ export const ProfilePage: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="text-[#8A95AA] text-[10px] uppercase">Display Name</label>
+                    <label htmlFor="prov-name" className="text-[#8A95AA] text-[10px] uppercase">Display Name</label>
                     <input
+                      id="prov-name"
+                      name="provName"
                       type="text"
                       required
                       autoComplete="off"
@@ -355,8 +369,10 @@ export const ProfilePage: React.FC = () => {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-[#8A95AA] text-[10px] uppercase">Initial Password</label>
+                    <label htmlFor="prov-password" className="text-[#8A95AA] text-[10px] uppercase">Initial Password</label>
                     <input
+                      id="prov-password"
+                      name="provPassword"
                       type="password"
                       required
                       minLength={8}
@@ -367,8 +383,10 @@ export const ProfilePage: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="text-[#8A95AA] text-[10px] uppercase">Enclave Role</label>
+                    <label htmlFor="prov-role" className="text-[#8A95AA] text-[10px] uppercase">Enclave Role</label>
                     <select
+                      id="prov-role"
+                      name="provRole"
                       value={provRole}
                       onChange={(e) => setProvRole(e.target.value)}
                       className="w-full mt-1 px-3 py-1.5 rounded-lg bg-[#0B1220] border border-[#3FC7D4]/20 text-[#E7ECF5] focus:outline-none focus:border-[#3FC7D4]"

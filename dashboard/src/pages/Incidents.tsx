@@ -82,7 +82,7 @@ export const IncidentsPage: React.FC = () => {
             <span className="text-[#FF8A3D] font-bold">{incidents.length}</span>
           </div>
           <Link
-            to="/replay"
+            to="/app/replay"
             className="px-3.5 py-1.5 rounded-lg bg-[#3FC7D4]/15 border border-[#3FC7D4]/30 text-[#3FC7D4] text-xs font-mono font-bold hover:bg-[#3FC7D4]/25 transition-all flex items-center gap-1.5"
           >
             <Zap className="w-3.5 h-3.5" />
@@ -153,10 +153,10 @@ export const IncidentsPage: React.FC = () => {
               : "No incidents matched your search or filter parameters. Try clearing the filter or searching for another keyword."
           }
           actionLabel={incidents.length === 0 ? "LAUNCH REPLAY LAB →" : "RESET FILTERS"}
-          actionTo={incidents.length === 0 ? "/replay" : undefined}
+          actionTo={incidents.length === 0 ? "/app/replay" : undefined}
           onAction={incidents.length > 0 ? () => { setSearchQuery(""); setFilterThreat("ALL"); } : undefined}
           secondaryActionLabel="VIEW LIVE MONITOR"
-          secondaryActionTo="/monitor"
+          secondaryActionTo="/app/monitor"
           variant={incidents.length === 0 ? "warn" : "default"}
         />
       ) : (
@@ -175,7 +175,7 @@ export const IncidentsPage: React.FC = () => {
                 transition={{ duration: 0.25, delay: Math.min(index * 0.04, 0.4) }}
               >
                 <Link
-                  to={`/incidents/${inc.incident_id}`}
+                  to={`/app/incidents/${inc.incident_id}`}
                   className="block p-5 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/15 hover:border-[#3FC7D4]/50 hover:bg-[#1B2540] hover:-translate-y-0.5 active:scale-[0.99] transition-all duration-200 group relative overflow-hidden shadow-lg hover:shadow-[0_0_20px_rgba(63,199,212,0.12)]"
                 >
                   {/* Accent Side Bar */}

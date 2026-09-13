@@ -142,7 +142,7 @@ export const OverviewPage: React.FC = () => {
         </Tooltip>
 
         {/* KPI 3: Correlated Incidents */}
-        <Link to="/incidents" className="w-full">
+        <Link to="/app/incidents" className="w-full">
           <Tooltip
             title="Kill-Chain Incidents"
             code="CORRELATION"
@@ -169,7 +169,7 @@ export const OverviewPage: React.FC = () => {
         </Link>
 
         {/* KPI 4: Alerts Per Minute */}
-        <Link to="/alerts" className="w-full">
+        <Link to="/app/alerts" className="w-full">
           <Tooltip
             title="Scored Alerts Frequency"
             code="RATE"
@@ -220,7 +220,7 @@ export const OverviewPage: React.FC = () => {
               </Tooltip>
             </div>
             <Link
-              to="/graph"
+              to="/app/graph"
               className="text-[11px] font-mono text-[#3FC7D4] hover:underline"
             >
               EXPAND INTERACTIVE GRAPH →

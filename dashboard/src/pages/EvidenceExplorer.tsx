@@ -48,9 +48,9 @@ export const EvidenceExplorerPage: React.FC = () => {
           title="NO ALERT SELECTED"
           description="Please select an alert from the Alerts & Evidence Explorer or Live Monitor feed to inspect its mathematical evidence meters, heuristic triggers, and signed TreeSHAP feature attributions."
           actionLabel="BROWSE ALL ALERTS →"
-          actionTo="/alerts"
+          actionTo="/app/alerts"
           secondaryActionLabel="VIEW LIVE MONITOR"
-          secondaryActionTo="/monitor"
+          secondaryActionTo="/app/monitor"
           variant="signal"
         />
       </div>

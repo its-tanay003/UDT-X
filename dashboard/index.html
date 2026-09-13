@@ -14,6 +14,57 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <script>
+      // Defensive shield against third-party/DevTools Web-Vitals scripts throwing on empty entry lists
+      (function() {
+        if (typeof window === 'undefined' || !window.PerformanceObserver) return;
+        try {
+          var OriginalObserver = window.PerformanceObserver;
+          window.PerformanceObserver = function(callback) {
+            var guardedCallback = function(list, observer) {
+              try {
+                if (list && typeof list.getEntries === 'function') {
+                  var origGetEntries = list.getEntries.bind(list);
+                  list.getEntries = function() {
+                    var entries = origGetEntries();
+                    if (!entries || entries.length === 0) {
+                      // Return dummy safe interaction entry if queried
+                      return [{ startTime: 0, duration: 0, interactionId: 0, name: 'dummy' }];
+                    }
+                    return entries;
+                  };
+                }
+              } catch (e) {}
+              try {
+                return callback(list, observer);
+              } catch (err) {
+                // Safely prevent uncaught TypeError from crashing the station
+                if (err && err.message && err.message.indexOf('startTime') !== -1) {
+                  console.warn('[UDT-X Web-Vitals Guard] Prevented third-party unhandled INP observer crash:', err);
+                  return;
+                }
+                throw err;
+              }
+            };
+            return new OriginalObserver(guardedCallback);
+          };
+          window.PerformanceObserver.prototype = OriginalObserver.prototype;
+          window.PerformanceObserver.supportedEntryTypes = OriginalObserver.supportedEntryTypes;
+        } catch (e) {}
+
+        // Filter upstream Three.js Clock deprecation notice coming from inside @react-three/fiber createRoot
+        try {
+          var origWarn = console.warn;
+          console.warn = function() {
+            var msg = arguments[0];
+            if (typeof msg === 'string' && msg.indexOf('THREE.Clock: This module has been deprecated') !== -1) {
+              return; // Silently bypass upstream warning to keep station console pristine
+            }
+            return origWarn.apply(console, arguments);
+          };
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body class="bg-[#0B1220] text-[#E7ECF5] antialiased selection:bg-[#3FC7D4] selection:text-[#0B1220]">
     <div id="root"></div>

@@ -221,10 +221,10 @@ export const AlertsPage: React.FC = () => {
               : "No alerts match your current filter parameters. Try selecting 'ALL CLASSES' or resetting the search."
           }
           actionLabel={alerts.length === 0 ? "RUN REPLAY ATTACK SIMULATION →" : "RESET FILTERS"}
-          actionTo={alerts.length === 0 ? "/replay" : undefined}
+          actionTo={alerts.length === 0 ? "/app/replay" : undefined}
           onAction={alerts.length > 0 ? () => { setSearchQuery(""); setFilterClass("ALL"); setFilterSeverity("ALL"); } : undefined}
           secondaryActionLabel="VIEW LIVE MONITOR"
-          secondaryActionTo="/monitor"
+          secondaryActionTo="/app/monitor"
         />
       ) : (
         <div className="rounded-xl bg-[#131B2E] border border-[#3FC7D4]/15 overflow-hidden">

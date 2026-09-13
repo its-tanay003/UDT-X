@@ -23,6 +23,7 @@ import { useAuthStore } from "./lib/auth";
 import { Tooltip } from "./components/Tooltip";
 import { CookieConsentBanner } from "./components/CookieConsentBanner";
 import { SEO } from "./components/SEO";
+import { getApiBaseUrl, getWebSocketBaseUrl } from "./lib/apiConfig";
 
 // Public Pages
 import { LandingPage } from "./pages/Landing";
@@ -279,11 +280,13 @@ const AuthenticatedEnclave: React.FC = () => {
   useEffect(() => {
     if (!user) return;
     const token = useAuthStore.getState().accessToken;
+    const wsBase = getWebSocketBaseUrl();
+    const apiBase = getApiBaseUrl();
     const wsUrl = token
-      ? `ws://localhost:8000/ws/live?token=${token}`
-      : "ws://localhost:8000/ws/live";
+      ? `${wsBase}/ws/live?token=${token}`
+      : `${wsBase}/ws/live`;
 
-    const cleanup = connectWebSocket(wsUrl, "http://localhost:8000");
+    const cleanup = connectWebSocket(wsUrl, apiBase);
     return cleanup;
   }, [connectWebSocket, user]);
 
@@ -379,6 +382,7 @@ const AuthenticatedEnclave: React.FC = () => {
             className="w-full"
           >
             <Routes location={location} key={location.pathname}>
+              <Route index element={<OverviewPage />} />
               <Route path="/" element={<OverviewPage />} />
               <Route path="/monitor" element={<LiveMonitorPage />} />
               <Route path="/incidents" element={<IncidentsPage />} />

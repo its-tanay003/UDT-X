@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import { getApiBaseUrl } from "./apiConfig";
 
 export interface User {
   id: string;
@@ -98,7 +99,8 @@ export const useAuthStore = create<AuthState>()(
 
       logout: async () => {
         try {
-          await fetch("http://localhost:8000/auth/logout", { method: "POST" });
+          const api = getApiBaseUrl();
+          await fetch(`${api}/auth/logout`, { method: "POST" });
         } catch (e) {
           console.debug("Logout cleanup error:", e);
         }
@@ -125,7 +127,8 @@ export const useAuthStore = create<AuthState>()(
     const token = get().accessToken;
     if (!token) return;
     try {
-      const res = await fetch("http://localhost:8000/settings", {
+      const api = getApiBaseUrl();
+      const res = await fetch(`${api}/settings`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -141,7 +144,8 @@ export const useAuthStore = create<AuthState>()(
     const token = get().accessToken;
     if (!token) return;
     try {
-      await fetch("http://localhost:8000/settings", {
+      const api = getApiBaseUrl();
+      await fetch(`${api}/settings`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -177,7 +181,8 @@ export const useAuthStore = create<AuthState>()(
     const token = get().accessToken;
     if (token) {
       try {
-        await fetch("http://localhost:8000/auth/me", {
+        const api = getApiBaseUrl();
+        await fetch(`${api}/auth/me`, {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
@@ -197,7 +202,8 @@ export const useAuthStore = create<AuthState>()(
     const token = get().accessToken;
     if (token) {
       try {
-        await fetch("http://localhost:8000/auth/me", {
+        const api = getApiBaseUrl();
+        await fetch(`${api}/auth/me`, {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
@@ -248,7 +254,8 @@ export async function apiFetch(url: string, options: RequestInit = {}): Promise<
   // Handle 401 Unauthorized token refresh
   if (response.status === 401) {
     try {
-      const refreshRes = await fetch("http://localhost:8000/auth/refresh", {
+      const api = getApiBaseUrl();
+      const refreshRes = await fetch(`${api}/auth/refresh`, {
         method: "POST",
       });
       if (refreshRes.ok) {

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Shield, Key, AlertTriangle, ArrowRight, ArrowLeft } from "lucide-react";
 import { useAuthStore } from "../lib/auth";
@@ -11,12 +11,18 @@ interface LoginProps {
 }
 
 export const LoginPage: React.FC<LoginProps> = ({ onSuccess }) => {
-  const { setAuth } = useAuthStore();
+  const { user, setAuth } = useAuthStore();
   const navigate = useNavigate();
   const [email, setEmail] = useState("admin@udtx.local");
   const [password, setPassword] = useState("AdminEnclave2026!");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      navigate("/app", { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,10 +110,12 @@ export const LoginPage: React.FC<LoginProps> = ({ onSuccess }) => {
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="space-y-4 font-mono text-xs">
           <div className="space-y-1.5">
-            <label className="text-[#8A95AA] uppercase tracking-wider text-[10px]">
+            <label htmlFor="station-email" className="text-[#8A95AA] uppercase tracking-wider text-[10px]">
               Analyst Enclave Email / Call-Sign
             </label>
             <input
+              id="station-email"
+              name="username"
               type="email"
               required
               autoComplete="username"
@@ -119,10 +127,12 @@ export const LoginPage: React.FC<LoginProps> = ({ onSuccess }) => {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[#8A95AA] uppercase tracking-wider text-[10px]">
+            <label htmlFor="station-password" className="text-[#8A95AA] uppercase tracking-wider text-[10px]">
               Station Password
             </label>
             <input
+              id="station-password"
+              name="password"
               type="password"
               required
               autoComplete="current-password"

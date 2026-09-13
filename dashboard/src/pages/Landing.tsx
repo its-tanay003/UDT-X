@@ -1,9 +1,12 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Shield, Radio, Flame, Cpu, Terminal, ArrowRight, Lock, Zap, CheckCircle2, Globe, Activity } from "lucide-react";
+import { useAuthStore } from "../lib/auth";
 import { SEO } from "../components/SEO";
 
 export const LandingPage: React.FC = () => {
+  const { user } = useAuthStore();
+
   return (
     <div className="min-h-screen bg-[#0B1220] text-[#E7ECF5] font-sans selection:bg-[#3FC7D4] selection:text-[#0B1220] flex flex-col">
       <SEO
@@ -31,13 +34,23 @@ export const LandingPage: React.FC = () => {
           <Link to="/privacy" className="text-xs font-mono text-[#8A95AA] hover:text-[#3FC7D4] transition-colors hidden sm:inline-block">
             Privacy (DPDP)
           </Link>
-          <Link
-            to="/login"
-            className="px-4 py-2 rounded-lg bg-[#3FC7D4] text-[#0B1220] font-mono text-xs font-bold hover:bg-[#35B2BE] transition-all shadow-[0_0_15px_rgba(63,199,212,0.3)] flex items-center gap-1.5"
-          >
-            <span>Station Login</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
+          {user ? (
+            <Link
+              to="/app"
+              className="px-4 py-2 rounded-lg bg-[#3FC7D4] text-[#0B1220] font-mono text-xs font-bold hover:bg-[#35B2BE] transition-all shadow-[0_0_15px_rgba(63,199,212,0.3)] flex items-center gap-1.5"
+            >
+              <span>Enter Enclave</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          ) : (
+            <Link
+              to="/login"
+              className="px-4 py-2 rounded-lg bg-[#3FC7D4] text-[#0B1220] font-mono text-xs font-bold hover:bg-[#35B2BE] transition-all shadow-[0_0_15px_rgba(63,199,212,0.3)] flex items-center gap-1.5"
+            >
+              <span>Station Login</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          )}
         </nav>
       </header>
 
@@ -63,13 +76,23 @@ export const LandingPage: React.FC = () => {
 
           {/* Primary Clear CTA */}
           <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              to="/login"
-              className="w-full sm:w-auto px-8 py-4 rounded-xl bg-[#3FC7D4] hover:bg-[#35B2BE] text-[#0B1220] font-mono font-bold text-sm uppercase tracking-wider transition-all shadow-[0_0_25px_rgba(63,199,212,0.4)] flex items-center justify-center gap-2"
-            >
-              <span>Initialize Station Access</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+            {user ? (
+              <Link
+                to="/app"
+                className="w-full sm:w-auto px-8 py-4 rounded-xl bg-[#3FC7D4] hover:bg-[#35B2BE] text-[#0B1220] font-mono font-bold text-sm uppercase tracking-wider transition-all shadow-[0_0_25px_rgba(63,199,212,0.4)] flex items-center justify-center gap-2"
+              >
+                <span>Enter Enclave Console</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            ) : (
+              <Link
+                to="/login"
+                className="w-full sm:w-auto px-8 py-4 rounded-xl bg-[#3FC7D4] hover:bg-[#35B2BE] text-[#0B1220] font-mono font-bold text-sm uppercase tracking-wider transition-all shadow-[0_0_25px_rgba(63,199,212,0.4)] flex items-center justify-center gap-2"
+              >
+                <span>Initialize Station Access</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            )}
             <Link
               to="/faq"
               className="w-full sm:w-auto px-6 py-4 rounded-xl bg-[#131B2E] hover:bg-[#1B2540] border border-[#3FC7D4]/30 text-[#E7ECF5] font-mono text-sm transition-colors flex items-center justify-center gap-2"
@@ -158,8 +181,9 @@ export const LandingPage: React.FC = () => {
         <div className="flex flex-wrap justify-center gap-6">
           <Link to="/faq" className="hover:text-[#3FC7D4] transition-colors">Architecture FAQ</Link>
           <Link to="/privacy" className="hover:text-[#3FC7D4] transition-colors">Privacy Policy (DPDP)</Link>
-          <Link to="/terms" className="hover:text-[#3FC7D4] transition-colors">Terms of Use</Link>
-          <Link to="/login" className="hover:text-[#3FC7D4] transition-colors">Station Login</Link>
+          <Link to={user ? "/app" : "/login"} className="hover:text-[#3FC7D4] transition-colors">
+            {user ? "Enclave Console" : "Station Login"}
+          </Link>
           <button
             onClick={() => window.dispatchEvent(new CustomEvent("open-cookie-preferences"))}
             className="hover:text-[#3FC7D4] transition-colors underline"

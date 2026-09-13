@@ -134,10 +134,10 @@ export const LiveMonitorPage: React.FC = () => {
               : "No live alerts match your current filter criteria. Try resetting the class or severity filters."
           }
           actionLabel={alerts.length === 0 ? "LAUNCH REPLAY LAB →" : "RESET FILTERS"}
-          actionTo={alerts.length === 0 ? "/replay" : undefined}
+          actionTo={alerts.length === 0 ? "/app/replay" : undefined}
           onAction={alerts.length > 0 ? () => { setSearchQuery(""); setFilterClass("ALL"); setFilterSeverity("ALL"); } : undefined}
           secondaryActionLabel="VIEW INCIDENTS DOSSIER"
-          secondaryActionTo="/incidents"
+          secondaryActionTo="/app/incidents"
           variant={alerts.length === 0 ? "signal" : "default"}
         />
       ) : (
@@ -199,7 +199,7 @@ export const LiveMonitorPage: React.FC = () => {
                       {new Date(alt.timestamp).toLocaleTimeString()}
                     </span>
                     <Link
-                      to={`/alerts/${alt.alert_id}/evidence`}
+                      to={`/app/alerts/${alt.alert_id}/evidence`}
                       className="text-xs text-[#3FC7D4] hover:underline font-bold inline-flex items-center gap-1 active:scale-[0.97] transition-all"
                     >
                       <span>INSPECT EVIDENCE</span>
@@ -275,7 +275,7 @@ export const LiveMonitorPage: React.FC = () => {
                       </td>
                       <td className="py-3 px-4 text-right">
                         <Link
-                          to={`/alerts/${alt.alert_id}/evidence`}
+                          to={`/app/alerts/${alt.alert_id}/evidence`}
                           className="text-[#3FC7D4] hover:underline font-bold inline-flex items-center gap-1 active:scale-[0.97] transition-all"
                         >
                           <span>INSPECT</span>
