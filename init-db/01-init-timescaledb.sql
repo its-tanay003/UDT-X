@@ -70,3 +70,32 @@ CREATE INDEX IF NOT EXISTS idx_alerts_type_time ON alerts (alert_type, time DESC
 CREATE INDEX IF NOT EXISTS idx_alerts_src_ip ON alerts (src_ip, time DESC);
 CREATE INDEX IF NOT EXISTS idx_alerts_dst_ip ON alerts (dst_ip, time DESC);
 CREATE INDEX IF NOT EXISTS idx_alerts_status ON alerts (status, time DESC);
+
+-- -----------------------------------------------------------------------------
+-- Correlated Security Incidents Table & Hypertable
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS incidents (
+    time TIMESTAMPTZ NOT NULL,
+    incident_id UUID DEFAULT gen_random_uuid(),
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    attack_chain VARCHAR(64),
+    severity VARCHAR(32) NOT NULL DEFAULT 'medium',
+    risk_score DOUBLE PRECISION DEFAULT 0.0,
+    status VARCHAR(32) DEFAULT 'active',
+    alert_ids JSONB DEFAULT '[]'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL,
+    last_updated TIMESTAMPTZ NOT NULL,
+    CONSTRAINT pk_incidents PRIMARY KEY (time, incident_id)
+);
+
+-- Convert incidents to TimescaleDB Hypertable
+SELECT create_hypertable(
+    'incidents',
+    'time',
+    chunk_time_interval => INTERVAL '7 days',
+    if_not_exists => TRUE
+);
+
+CREATE INDEX IF NOT EXISTS idx_incidents_status_time ON incidents (status, time DESC);
+CREATE INDEX IF NOT EXISTS idx_incidents_risk_time ON incidents (risk_score DESC, time DESC);

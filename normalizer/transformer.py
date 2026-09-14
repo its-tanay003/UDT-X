@@ -229,8 +229,12 @@ def transform_to_flow_event(raw_data: Any) -> FlowEvent:
     if "flow_id" in raw_data and "source" in raw_data and "bytes" in raw_data:
         try:
             return FlowEvent.model_validate(raw_data)
-        except Exception:
-            pass  # Attempt specialized mapping if validation fails
+        except Exception as exc:
+            logger.debug(
+                "Direct FlowEvent.model_validate failed, attempting specialized format mapping: %s",
+                exc,
+                exc_info=True,
+            )
 
     # 2. Zeek conn.log pattern
     if "id.orig_h" in raw_data or raw_data.get("source") == "zeek":

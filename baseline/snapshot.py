@@ -49,8 +49,8 @@ class TimescaleSnapshotter:
                             if_not_exists => TRUE
                         );
                         """)
-                    except Exception:
-                        pass
+                    except Exception as exc:
+                        logger.exception("Failed to configure chunk interval on baseline_snapshots table: %s", exc)
                 conn.commit()
                 logger.info("TimescaleDB baseline_snapshots table initialized.")
         except Exception as exc:

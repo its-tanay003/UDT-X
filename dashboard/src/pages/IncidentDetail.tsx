@@ -12,7 +12,7 @@ import {
 import { useLiveStore } from "../lib/store";
 import { EmptyState } from "../components/EmptyState";
 import { Tooltip } from "../components/Tooltip";
-import type { Alert, Incident } from "../types/soc";
+import { getMitreLabel, type Alert, type Incident } from "../types/soc";
 
 export const IncidentDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -140,13 +140,16 @@ export const IncidentDetailPage: React.FC = () => {
 
                       <div className="flex items-center justify-between pt-1 border-t border-[#3FC7D4]/10">
                         <div className="flex gap-1">
-                          {alt.mitre?.map((m) => (
-                            <Tooltip key={m} content={`MITRE ATT&CK Technique ID: ${m}`} code={m}>
-                              <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-[#131B2E] text-[#8A95AA]">
-                                {m}
-                              </span>
-                            </Tooltip>
-                          ))}
+                          {alt.mitre?.map((m, mIdx) => {
+                            const label = getMitreLabel(m);
+                            return (
+                              <Tooltip key={`${alt.alert_id}-m-${mIdx}`} content={`MITRE ATT&CK: ${label}`} code={label}>
+                                <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-[#131B2E] text-[#8A95AA]">
+                                  {label}
+                                </span>
+                              </Tooltip>
+                            );
+                          })}
                         </div>
                         <Link
                           to={`/alerts/${alt.alert_id}/evidence`}

@@ -17,5 +17,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY schema/ /app/schema/
 COPY ingestion/ /app/ingestion/
 
+RUN groupadd -r udtx && useradd -r -g udtx -u 10001 -d /app -s /sbin/nologin udtx \
+    && chown -R udtx:udtx /app
+
+USER udtx
+
 ENTRYPOINT ["python", "-m", "ingestion.pcap_reader.main"]
 CMD ["--watch-dir", "/data/pcaps", "--kafka-brokers", "redpanda:9092"]

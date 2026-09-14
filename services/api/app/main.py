@@ -1,29 +1,21 @@
 """UDT-X Core API Service with Authentication, Rate Limiting, and CORS."""
 
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
-from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
-from slowapi.util import get_remote_address
+from slowapi.middleware import SlowAPIMiddleware
 
+from services.api.app.limiter import limiter, udtx_rate_limit_exceeded_handler
 from services.api.app.routers.auth import router as auth_router
 from services.api.app.routers.settings import router as settings_router
 from services.api.app.routers.soc import router as soc_router
 from services.api.app.routers.copilot import router as copilot_router
 from services.api.app.routers.privacy import router as privacy_router
-
-
-# Rate Limiting configuration (Redis / Memory backed)
-def rate_limit_key_func(request: Request) -> str:
-    # Key by user token subject if present in Authorization header, else remote IP
-    auth = request.headers.get("Authorization", "")
-    if auth.startswith("Bearer "):
-        return auth
-    return get_remote_address(request)
-
-
-limiter = Limiter(key_func=rate_limit_key_func, default_limits=["100/minute"])
 
 app = FastAPI(
     title="UDT-X Core API",
@@ -32,7 +24,8 @@ app = FastAPI(
 )
 
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_exception_handler(RateLimitExceeded, udtx_rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 
 # CORS explicit origin configuration with regex fallback for local ports
 cors_origins_env = os.getenv(

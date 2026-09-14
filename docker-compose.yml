@@ -78,7 +78,7 @@ services:
     container_name: udtx-timescaledb
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-udtx_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-udtx_password}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB:-udtx}
     ports:
       - "5432:5432"
@@ -120,7 +120,7 @@ services:
     image: neo4j:5-community
     container_name: udtx-neo4j
     environment:
-      NEO4J_AUTH: ${NEO4J_AUTH:-neo4j/udtxpassword}
+      NEO4J_AUTH: ${NEO4J_AUTH}
       NEO4J_dbms_memory_pagecache_size: 512M
       NEO4J_dbms_memory_heap_initial__size: 512M
       NEO4J_dbms_memory_heap_max__size: 1G
@@ -370,7 +370,7 @@ services:
       INPUT_TOPIC: flow-events
       KAFKA_GROUP_ID: udtx-baseline-service
       REDIS_URL: redis://redis:6379/0
-      DATABASE_URL: postgresql://${POSTGRES_USER:-udtx_user}:${POSTGRES_PASSWORD:-udtx_password}@timescaledb:5432/${POSTGRES_DB:-udtx}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-udtx_user}:${POSTGRES_PASSWORD}@timescaledb:5432/${POSTGRES_DB:-udtx}
     restart: unless-stopped
     networks:
       - udtx-network
@@ -418,7 +418,7 @@ services:
       KAFKA_GROUP_ID: udtx-correlation-service
       NEO4J_URI: bolt://neo4j:7687
       NEO4J_USER: neo4j
-      NEO4J_PASSWORD: ${NEO4J_PASSWORD:-udtxpassword}
+      NEO4J_PASSWORD: ${NEO4J_PASSWORD}
       CORRELATION_WINDOW_MINUTES: "30"
     restart: unless-stopped
     networks:
@@ -465,12 +465,13 @@ services:
       neo4j:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-udtx_user}:${POSTGRES_PASSWORD:-udtx_password}@timescaledb:5432/${POSTGRES_DB:-udtx}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-udtx_user}:${POSTGRES_PASSWORD}@timescaledb:5432/${POSTGRES_DB:-udtx}
       REDIS_URL: redis://redis:6379/0
       KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
       NEO4J_URI: bolt://neo4j:7687
       NEO4J_USER: neo4j
-      NEO4J_PASSWORD: ${NEO4J_PASSWORD:-udtxpassword}
+      NEO4J_PASSWORD: ${NEO4J_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
     ports:
       - "8000:8000"
     healthcheck:
@@ -494,7 +495,7 @@ services:
       api:
         condition: service_healthy
     ports:
-      - "3001:80"
+      - "3001:8080"
     restart: unless-stopped
     networks:
       - udtx-network

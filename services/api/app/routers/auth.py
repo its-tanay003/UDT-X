@@ -9,16 +9,28 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 from uuid import uuid4
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel, EmailStr, Field
 
+from services.api.app.limiter import limiter
+
 router = APIRouter(prefix="/auth", tags=["Authentication & User Management"])
 
-# Security & Crypto Config
-SECRET_KEY = os.getenv("JWT_SECRET", "udtx-super-secret-enclave-key-2026-sigint-defense")
+# Security & Crypto Config - Fail startup immediately if JWT_SECRET is missing
+if "JWT_SECRET" not in os.environ or not os.environ["JWT_SECRET"]:
+    raise RuntimeError(
+        "CRITICAL SECURITY FAULT: JWT_SECRET environment variable is mandatory and unset. "
+        "UDT-X refuses to start with an insecure or default secret key."
+    )
+
+SECRET_KEY = os.environ["JWT_SECRET"]
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
 REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
@@ -182,6 +194,7 @@ async def require_admin(
 
 # --- Public & Authenticated Endpoints ---
 @router.post("/login", response_model=TokenResponse)
+@limiter.limit("100/minute")
 async def login(req: LoginRequest, request: Request, response: Response) -> TokenResponse:
     user = INITIAL_USERS.get(req.email.lower())
     if not user or not verify_password(req.password, user.password_hash):

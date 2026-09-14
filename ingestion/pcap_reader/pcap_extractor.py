@@ -1,11 +1,14 @@
 """UDT-X PCAP Flow Extractor Engine."""
 
 import ipaddress
+import logging
 import math
 import uuid
 from collections.abc import Generator
 from datetime import UTC, datetime
 from pathlib import Path
+
+logger = logging.getLogger("udtx.ingestion.pcap_extractor")
 
 from schema.models import (
     DNSData,
@@ -181,8 +184,8 @@ def extract_flows_from_pcap(
                     else:
                         dns_query = str(qname).rstrip(".")
                     dns_qtype = str(pkt[DNSQR].qtype)
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.exception("Failed to parse DNS query field: %s", exc)
 
             tls_sni = None
             if (dst_port == 443 or src_port == 443) and pkt.haslayer(TCP):
@@ -192,8 +195,8 @@ def extract_flows_from_pcap(
                         idx = raw_payload.find(b"\x00\x00")
                         if idx != -1 and idx + 5 < len(raw_payload):
                             tls_sni = None
-                    except Exception:
-                        pass
+                    except Exception as exc:
+                        logger.exception("Failed to extract TLS SNI payload: %s", exc)
 
             if flow_key not in flows:
                 flows[flow_key] = FlowAccumulator(

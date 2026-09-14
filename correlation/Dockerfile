@@ -10,4 +10,10 @@ COPY correlation/ /app/correlation/
 
 ENV PYTHONPATH=/app
 
+RUN groupadd -r udtx && useradd -r -g udtx -u 10001 -d /app -s /sbin/nologin udtx \
+    && chown -R udtx:udtx /app
+
+USER udtx
+
 CMD ["python", "-m", "correlation.main"]
+

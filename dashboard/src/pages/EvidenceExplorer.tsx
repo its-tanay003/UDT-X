@@ -11,7 +11,7 @@ import {
 import { useLiveStore } from "../lib/store";
 import { EmptyState } from "../components/EmptyState";
 import { Tooltip } from "../components/Tooltip";
-import type { Alert } from "../types/soc";
+import { getMitreLabel, type Alert } from "../types/soc";
 
 export const EvidenceExplorerPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -161,18 +161,21 @@ export const EvidenceExplorerPage: React.FC = () => {
                   Mapped MITRE ATT&CK Techniques:
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {alert.mitre.map((m) => (
-                    <Tooltip
-                      key={m}
-                      title="MITRE ATT&CK Matrix"
-                      code={m}
-                      content="Enterprise attack technique taxonomy identifier for automated playbook orchestration."
-                    >
-                      <span className="px-2.5 py-1 rounded bg-[#0B1220] border border-[#3FC7D4]/30 text-[#3FC7D4] font-mono text-xs font-semibold cursor-help">
-                        {m}
-                      </span>
-                    </Tooltip>
-                  ))}
+                  {alert.mitre.map((m, mIdx) => {
+                    const label = getMitreLabel(m);
+                    return (
+                      <Tooltip
+                        key={`${alert.alert_id}-m-${mIdx}`}
+                        title="MITRE ATT&CK Matrix"
+                        code={label}
+                        content="Enterprise attack technique taxonomy identifier for automated playbook orchestration."
+                      >
+                        <span className="px-2.5 py-1 rounded bg-[#0B1220] border border-[#3FC7D4]/30 text-[#3FC7D4] font-mono text-xs font-semibold cursor-help">
+                          {label}
+                        </span>
+                      </Tooltip>
+                    );
+                  })}
                 </div>
               </div>
             )}

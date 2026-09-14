@@ -37,9 +37,18 @@ export interface Alert {
   severity: Severity;
   confidence: number;
   risk_score: number;
-  evidence: Array<{ label: string; value: number | string }>;
-  mitre: string[];
+  evidence: Array<{ label?: string; key?: string; value: number | string }>;
+  mitre?: Array<string | { tactic?: string | null; technique_id?: string; technique_name?: string; url?: string | null }>;
   shap_values?: Array<{ feature: string; contribution: number }>;
+}
+
+export function getMitreLabel(item: any): string {
+  if (!item) return "";
+  if (typeof item === "string") return item;
+  if (typeof item === "object") {
+    return item.technique_id || item.technique_name || item.name || "";
+  }
+  return String(item);
 }
 
 export interface Incident {

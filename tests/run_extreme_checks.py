@@ -1,9 +1,12 @@
 import asyncio
 import json
+import os
+import sys
+sys.path.insert(0, os.path.abspath("."))
+
 import httpx
 from starlette.testclient import TestClient
 from services.api.app.main import app
-import sys
 
 BASE_URL = "http://127.0.0.1:8000"
 
@@ -85,6 +88,41 @@ async def run_extreme_suite():
                 record("Auth: Cookie-Based Token Refresh", False, "No refresh cookie from login")
         except Exception as e:
             record("Auth: Cookie-Based Token Refresh", False, str(e))
+
+        # Test 2.4b: Expired JWT Token Rejection
+        try:
+            from datetime import datetime, timezone, timedelta
+            from jose import jwt
+            import os
+            secret = os.environ.get("JWT_SECRET", "dummy")
+            expired_payload = {
+                "sub": "admin@udtx.local",
+                "role": "admin",
+                "exp": datetime.now(timezone.utc) - timedelta(hours=2)
+            }
+            expired_token = jwt.encode(expired_payload, secret, algorithm="HS256")
+            r_exp = await client.get("/auth/users", headers={"Authorization": f"Bearer {expired_token}"})
+            record(
+                "Auth: Reject Expired JWT Token",
+                r_exp.status_code == 401,
+                f"Status: {r_exp.status_code} (detail: {r_exp.json().get('detail')})"
+            )
+        except Exception as e:
+            record("Auth: Reject Expired JWT Token", False, str(e))
+
+        # Test 2.4c: Tampered / Forged Signature JWT Token Rejection
+        try:
+            from jose import jwt
+            tampered_payload = {"sub": "admin@udtx.local", "role": "admin", "exp": datetime.now(timezone.utc) + timedelta(hours=1)}
+            tampered_token = jwt.encode(tampered_payload, "completely_wrong_attacker_secret_key_12345", algorithm="HS256")
+            r_tamp = await client.get("/auth/users", headers={"Authorization": f"Bearer {tampered_token}"})
+            record(
+                "Auth: Reject Tampered / Forged JWT Token",
+                r_tamp.status_code == 401,
+                f"Status: {r_tamp.status_code} (detail: {r_tamp.json().get('detail')})"
+            )
+        except Exception as e:
+            record("Auth: Reject Tampered / Forged JWT Token", False, str(e))
 
         # Test 2.5: Backend Admin Role Enforcement (Analyst hitting admin-only routes -> 403)
         try:
@@ -218,12 +256,11 @@ async def run_extreme_suite():
         except Exception as e:
             record("Telemetry: GET /performance", False, str(e))
 
-        # Test 3.3: Attack Simulation Replay via TestClient
+        # Test 3.3: Attack Simulation Replay
         try:
-            with TestClient(app) as test_c:
-                r = test_c.post("/replay/kill_chain", headers=headers_admin)
-                data = r.json()
-                record("Simulation: POST /replay/kill_chain", r.status_code == 200 and data.get("status") == "replayed", f"Alerts generated: {data.get('alerts_generated')}")
+            r = await client.post("/replay/kill_chain", headers=headers_admin)
+            data = r.json()
+            record("Simulation: POST /replay/kill_chain", r.status_code == 200 and data.get("status") == "replayed", f"Alerts generated: {data.get('alerts_generated')}")
         except Exception as e:
             record("Simulation: POST /replay/kill_chain", False, str(e))
 
@@ -247,6 +284,74 @@ async def run_extreme_suite():
             record("SIEM: GET /alerts/export?format=cef", r.status_code == 200, f"Export Length: {len(r.text)} chars")
         except Exception as e:
             record("SIEM: GET /alerts/export", False, str(e))
+
+        # Test 3.7: Persistence Across Store Restart
+        try:
+            import sqlite3
+            from datetime import datetime, timezone
+            from alert_manager.store import AlertManagerStore
+            from schema.models import Alert, SeverityLevel
+
+            test_conn = sqlite3.connect(":memory:")
+            cur = test_conn.cursor()
+            cur.execute("""
+                CREATE TABLE alerts (
+                    time TEXT NOT NULL,
+                    alert_id TEXT PRIMARY KEY,
+                    alert_type TEXT NOT NULL,
+                    severity TEXT NOT NULL,
+                    src_ip TEXT,
+                    dst_ip TEXT,
+                    title TEXT NOT NULL,
+                    description TEXT,
+                    confidence REAL,
+                    status TEXT,
+                    evidence TEXT
+                )
+            """)
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS incidents (
+                    time TEXT NOT NULL,
+                    incident_id TEXT PRIMARY KEY,
+                    title TEXT NOT NULL,
+                    description TEXT,
+                    attack_chain TEXT,
+                    severity TEXT NOT NULL,
+                    risk_score REAL,
+                    status TEXT,
+                    alert_ids TEXT,
+                    created_at TEXT NOT NULL,
+                    last_updated TEXT NOT NULL
+                )
+            """)
+            test_conn.commit()
+
+            store_1 = AlertManagerStore(db_pool=test_conn)
+            sample_alert = Alert(
+                alert_id="ALT-EXTREME-001",
+                timestamp=datetime.now(timezone.utc),
+                threat_class="data_exfiltration",
+                protocol="TCP",
+                severity=SeverityLevel.CRITICAL,
+                src_ip="192.168.1.99",
+                dst_ip="203.0.113.88",
+                title="Data Exfiltration Alert",
+                description="Persistent store validation alert",
+                confidence=0.98,
+                risk_score=95.0,
+            )
+            store_1.save_alert(sample_alert)
+
+            # Recreate store (simulating service restart)
+            store_2 = AlertManagerStore(db_pool=test_conn)
+            retrieved = store_2.get_alert("ALT-EXTREME-001")
+            record(
+                "Persistence: Alert Data Persists Across Store Restart",
+                retrieved is not None and getattr(retrieved, "src_ip", None) == "192.168.1.99",
+                f"Retrieved: {getattr(retrieved, 'alert_id', 'None')}",
+            )
+        except Exception as e:
+            record("Persistence: Alert Data Persists Across Store Restart", False, str(e))
 
         print("\n==================== 4. COPILOT & VOICE AGENT ENGINE ====================")
         # Test 4.1: Natural Voice/Text Query via Copilot
@@ -327,6 +432,25 @@ async def run_extreme_suite():
         except Exception:
             continue
     record("Frontend: Index HTML Serving", fe_passed, fe_status or "Failed connecting to frontend")
+
+    print("\n==================== 7. RATE LIMITING ENFORCEMENT ====================")
+    try:
+        with TestClient(app) as rate_client:
+            hit_429 = False
+            retry_val = None
+            for i in range(115):
+                r_rl = rate_client.post("/auth/login", json={"email": f"ratetest_{i}@udtx.local", "password": "x"})
+                if r_rl.status_code == 429:
+                    hit_429 = True
+                    retry_val = r_rl.headers.get("retry-after")
+                    break
+            record(
+                "Rate Limiting: 429 Too Many Requests with Retry-After Header",
+                hit_429 and bool(retry_val),
+                f"Triggered 429 at request {i}: Retry-After = {retry_val}s",
+            )
+    except Exception as e:
+        record("Rate Limiting: 429 Too Many Requests with Retry-After Header", False, str(e))
 
     print("\n==================== SUMMARY ====================")
     print(f"Total Checks Run: {results['passed'] + results['failed']}")

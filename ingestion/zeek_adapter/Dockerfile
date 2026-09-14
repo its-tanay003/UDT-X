@@ -9,7 +9,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 COPY ingestion/zeek_adapter/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+RUN groupadd -g 10001 udtx && useradd -u 10001 -g udtx -s /bin/false udtx
+
 COPY schema/ /app/schema/
 COPY ingestion/ /app/ingestion/
+
+USER udtx:udtx
 
 CMD ["python", "-m", "ingestion.zeek_adapter.adapter"]

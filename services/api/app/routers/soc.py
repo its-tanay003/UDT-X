@@ -492,7 +492,8 @@ async def live_dashboard_websocket(
             if data == "ping":
                 await websocket.send_text(json.dumps({"type": "PONG"}))
     except WebSocketDisconnect:
-        connected_websockets.pop(websocket, None)
+        pass
     except Exception as exc:
         logger.debug("WebSocket error: %s", exc)
+    finally:
         connected_websockets.pop(websocket, None)

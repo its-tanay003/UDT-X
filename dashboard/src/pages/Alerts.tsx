@@ -17,7 +17,7 @@ import { useLiveStore } from "../lib/store";
 import { EmptyState } from "../components/EmptyState";
 import { Tooltip } from "../components/Tooltip";
 import { OfflineStateBadge } from "../components/OfflineStateBadge";
-import type { Severity, ThreatClass } from "../types/soc";
+import { getMitreLabel, type Severity, type ThreatClass } from "../types/soc";
 
 export const AlertsPage: React.FC = () => {
   const { alerts, isConnected } = useLiveStore();
@@ -35,11 +35,11 @@ export const AlertsPage: React.FC = () => {
         if (filterSeverity !== "ALL" && a.severity !== filterSeverity) return false;
         if (searchQuery) {
           const q = searchQuery.toLowerCase();
-          const matchSrc = a.src_ip.toLowerCase().includes(q);
-          const matchDst = a.dst_ip.toLowerCase().includes(q);
-          const matchClass = a.threat_class.toLowerCase().includes(q);
-          const matchId = a.alert_id.toLowerCase().includes(q);
-          const matchMitre = a.mitre?.some((m) => m.toLowerCase().includes(q)) || false;
+          const matchSrc = (a.src_ip || "").toLowerCase().includes(q);
+          const matchDst = (a.dst_ip || "").toLowerCase().includes(q);
+          const matchClass = (a.threat_class || "").toLowerCase().includes(q);
+          const matchId = (a.alert_id || "").toLowerCase().includes(q);
+          const matchMitre = a.mitre?.some((m) => getMitreLabel(m).toLowerCase().includes(q)) || false;
           return matchSrc || matchDst || matchClass || matchId || matchMitre;
         }
         return true;
@@ -278,7 +278,7 @@ export const AlertsPage: React.FC = () => {
                     {alt.mitre && alt.mitre.length > 0 && (
                       <div className="flex items-center justify-between pt-1 border-t border-[#3FC7D4]/10">
                         <span>MITRE:</span>
-                        <span className="text-[#3FC7D4]">{alt.mitre.join(", ")}</span>
+                        <span className="text-[#3FC7D4]">{alt.mitre.map(getMitreLabel).join(", ")}</span>
                       </div>
                     )}
                   </div>
@@ -380,13 +380,16 @@ export const AlertsPage: React.FC = () => {
                       <td className="py-3 px-4">
                         <div className="flex flex-wrap gap-1">
                           {alt.mitre && alt.mitre.length > 0 ? (
-                            alt.mitre.slice(0, 2).map((m) => (
-                              <Tooltip key={m} content={`MITRE ATT&CK Technique ID: ${m}`} code={m}>
-                                <span className="px-1.5 py-0.5 rounded bg-[#0B1220] text-[#8A95AA] text-[10px] border border-[#3FC7D4]/10 cursor-help hover:border-[#3FC7D4]/40 hover:text-[#E7ECF5] transition-colors">
-                                  {m}
-                                </span>
-                              </Tooltip>
-                            ))
+                            alt.mitre.slice(0, 2).map((m, mIdx) => {
+                              const label = getMitreLabel(m);
+                              return (
+                                <Tooltip key={`${alt.alert_id}-m-${mIdx}`} content={`MITRE ATT&CK: ${label}`} code={label}>
+                                  <span className="px-1.5 py-0.5 rounded bg-[#0B1220] text-[#8A95AA] text-[10px] border border-[#3FC7D4]/10 cursor-help hover:border-[#3FC7D4]/40 hover:text-[#E7ECF5] transition-colors">
+                                    {label}
+                                  </span>
+                                </Tooltip>
+                              );
+                            })
                           ) : (
                             <span className="text-[#8A95AA] text-[10px]">—</span>
                           )}

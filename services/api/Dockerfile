@@ -20,7 +20,13 @@ COPY services/api/   /app/services/api/
 
 ENV PYTHONPATH=/app
 
+RUN groupadd -r udtx && useradd -r -g udtx -u 10001 -d /app -s /sbin/nologin udtx \
+    && chown -R udtx:udtx /app
+
+USER udtx
+
 EXPOSE 8000
+
 
 HEALTHCHECK --interval=10s --timeout=5s --start-period=5s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
