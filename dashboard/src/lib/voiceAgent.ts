@@ -2,9 +2,12 @@
  * UDT-X Voice Interaction & Voice Agent Controller.
  * 
  * Provides end-to-end voice control:
- * Audio Stream / VAD -> Web Speech Recognition -> Confidence / Ambiguity Filter
- * -> AI Copilot (Online/Offline) -> Verification & Action Dispatch -> Web Speech Synthesis (TTS)
+ * Audio Stream / VAD -> Dual-Engine STT (Online Web Speech API / Offline On-Device WASM)
+ * -> Confidence / Ambiguity Filter -> AI Copilot (Online/Offline) -> Verification & Action Dispatch
+ * -> Web Speech Synthesis (TTS)
  */
+
+import { offlineSttWasmEngine, type WasmSttResult } from "./offlineSttWasm";
 
 export interface VoiceState {
   isListening: boolean;
@@ -16,6 +19,10 @@ export interface VoiceState {
   confidence: number;
   error: string | null;
   voiceTtsEnabled: boolean;
+  engine: "web_speech" | "wasm_offline";
+  isOffline: boolean;
+  isWasmReady: boolean;
+  handoffMessage: string | null;
 }
 
 export type VoiceStateListener = (state: VoiceState) => void;
@@ -35,22 +42,66 @@ export class VoiceController {
   private synth: SpeechSynthesis | null = null;
   private listeners: Set<VoiceStateListener> = new Set();
   private selectedVoice: SpeechSynthesisVoice | null = null;
+  private activeFinalCallback: ((transcript: string, confidence: number) => void) | null = null;
 
   public state: VoiceState = {
     isListening: false,
     isSpeaking: false,
     isProcessing: false,
-    isSupported: false,
+    isSupported: true,
     interimTranscript: "",
     finalTranscript: "",
     confidence: 1.0,
     error: null,
     voiceTtsEnabled: true,
+    engine: "web_speech",
+    isOffline: false,
+    isWasmReady: false,
+    handoffMessage: null,
   };
 
   constructor() {
+    this.initConnectivityListeners();
     this.initSpeechRecognition();
     this.initSpeechSynthesis();
+    this.initWasmEngine();
+  }
+
+  private initConnectivityListeners() {
+    if (typeof window === "undefined") return;
+
+    this.state.isOffline = !navigator.onLine;
+    this.state.engine = navigator.onLine ? "web_speech" : "wasm_offline";
+
+    window.addEventListener("online", () => {
+      this.state.isOffline = false;
+      this.state.engine = "web_speech";
+      this.state.handoffMessage = null;
+      this.notify();
+    });
+
+    window.addEventListener("offline", () => {
+      const wasListening = this.state.isListening;
+      this.state.isOffline = true;
+      this.state.engine = "wasm_offline";
+
+      // Mid-listen network transition handling (doc 36 Section 8)
+      if (wasListening) {
+        this.handleMidListenNetworkDrop();
+      } else {
+        this.notify();
+      }
+    });
+  }
+
+  private async initWasmEngine() {
+    try {
+      const ok = await offlineSttWasmEngine.init();
+      this.state.isWasmReady = ok;
+      this.notify();
+    } catch {
+      this.state.isWasmReady = false;
+    }
   }
 
   private initSpeechRecognition() {
@@ -63,13 +114,14 @@ export class VoiceController {
       (window as any).msSpeechRecognition;
 
     if (!SpeechRecognition) {
-      this.state.isSupported = false;
-      this.state.error = "Web Speech API is not supported in this browser.";
+      // If Web Speech API is absent (e.g. Firefox without cloud speech or specialized air-gapped browser),
+      // switch default to on-device WASM STT
+      this.state.engine = "wasm_offline";
+      this.state.isSupported = true;
       this.notify();
       return;
     }
 
-    this.state.isSupported = true;
     try {
       this.recognition = new SpeechRecognition();
       this.recognition.continuous = false;
@@ -80,6 +132,7 @@ export class VoiceController {
         this.state.isListening = true;
         this.state.error = null;
         this.state.interimTranscript = "";
+        this.state.handoffMessage = null;
         this.notify();
       };
 
@@ -102,11 +155,22 @@ export class VoiceController {
         if (final) {
           this.state.finalTranscript = this.sanitizeSpokenInput(final);
           this.state.confidence = conf;
+          if (this.activeFinalCallback) {
+            const cb = this.activeFinalCallback;
+            this.activeFinalCallback = null;
+            cb(this.state.finalTranscript, this.state.confidence);
+          }
         }
         this.notify();
       };
 
       this.recognition.onerror = (event: any) => {
+        // Network drop during active listening
+        if (event.error === "network") {
+          this.handleMidListenNetworkDrop();
+          return;
+        }
+
         this.state.isListening = false;
         if (event.error !== "no-speech") {
           this.state.error = `Speech recognition error: ${event.error}`;
@@ -119,8 +183,30 @@ export class VoiceController {
         this.notify();
       };
     } catch (e: any) {
-      this.state.isSupported = false;
+      this.state.engine = "wasm_offline";
       this.state.error = e.message;
+    }
+  }
+
+  /**
+   * Seamless online-to-offline handoff when network drops mid-listen (doc 36 Section 8).
+   * Web Speech API errors on network loss; we catch it cleanly and switch to on-device WASM STT.
+   */
+  private handleMidListenNetworkDrop() {
+    try {
+      if (this.recognition) {
+        this.recognition.abort();
+      }
+    } catch {}
+
+    this.state.engine = "wasm_offline";
+    this.state.isOffline = true;
+    this.state.isListening = false;
+    this.state.handoffMessage = "Network disconnected. Switched to on-device offline voice engine — please repeat command.";
+    this.notify();
+
+    if (this.state.voiceTtsEnabled) {
+      this.speak("Network connection lost. Switched to offline voice engine. Please repeat your command.");
     }
   }
 
@@ -162,31 +248,66 @@ export class VoiceController {
   }
 
   public startListening(onFinal?: (transcript: string, confidence: number) => void) {
-    if (!this.recognition) return;
     this.cancelSpeaking();
 
     this.state.interimTranscript = "";
     this.state.finalTranscript = "";
     this.state.error = null;
+    this.state.handoffMessage = null;
+    this.activeFinalCallback = onFinal || null;
 
+    // Check connectivity and pick engine:
+    // Online + Web Speech supported -> use Web Speech API (zero bundle overhead)
+    // Offline or Web Speech unavailable -> route to on-device WASM STT
+    const useWasm = !navigator.onLine || !this.recognition;
+
+    if (useWasm) {
+      this.state.engine = "wasm_offline";
+      this.state.isListening = true;
+      this.notify();
+
+      offlineSttWasmEngine.startListening(
+        (interim) => {
+          this.state.interimTranscript = interim;
+          this.notify();
+        },
+        (result: WasmSttResult) => {
+          this.state.isListening = false;
+          this.state.interimTranscript = "";
+          this.state.finalTranscript = this.sanitizeSpokenInput(result.transcript);
+          this.state.confidence = result.confidence;
+          this.notify();
+
+          if (onFinal) {
+            onFinal(this.state.finalTranscript, result.confidence);
+          }
+        },
+        (err) => {
+          this.state.isListening = false;
+          this.state.error = err;
+          this.notify();
+        }
+      );
+      return;
+    }
+
+    // Online Web Speech API route
+    this.state.engine = "web_speech";
     try {
       this.recognition.start();
     } catch {
-      // Already running
-    }
-
-    if (onFinal) {
-      const checkFinal = (state: VoiceState) => {
-        if (!state.isListening && state.finalTranscript) {
-          this.listeners.delete(checkFinal);
-          onFinal(state.finalTranscript, state.confidence);
-        }
-      };
-      this.listeners.add(checkFinal);
+      // Already running or busy
     }
   }
 
   public stopListening() {
+    if (this.state.engine === "wasm_offline") {
+      offlineSttWasmEngine.stopListening();
+      this.state.isListening = false;
+      this.notify();
+      return;
+    }
+
     if (this.recognition && this.state.isListening) {
       try {
         this.recognition.stop();

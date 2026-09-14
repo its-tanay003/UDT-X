@@ -27,12 +27,15 @@ async def query_copilot(
     current_user: UserRecord = Depends(get_current_user),
 ) -> CopilotResponse:
     """Execute query against the AI Copilot with permission checks and tool validation."""
+    session_id = body.session_id or current_user.email
     response = copilot_agent.process_query(
         query=body.query,
         user_role=current_user.role,
         user_display_name=current_user.display_name,
         current_route=body.current_route or "/",
         confirmed_action=body.action_request,
+        session_id=session_id,
+        conversation_history=body.conversation_history,
     )
     return response
 

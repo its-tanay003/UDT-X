@@ -40,6 +40,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r services/api/requirements-dev.txt
 
+      - name: Verify Clean Fresh Venv Install
+        run: |
+          python -m venv test_env
+          test_env/bin/pip install --upgrade pip
+          test_env/bin/pip install -r services/api/requirements.txt
+          test_env/bin/python -c "from passlib.context import CryptContext; ctx = CryptContext(schemes=['bcrypt'], deprecated='auto'); h = ctx.hash('test_pass'); assert ctx.verify('test_pass', h); print('Clean venv bcrypt+passlib verify passed!')"
+
+
       - name: Run Ruff Linter
         run: |
           ruff check schema tests services
