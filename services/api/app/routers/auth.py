@@ -9,7 +9,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -71,6 +71,7 @@ USER_SETTINGS: dict[str, dict[str, Any]] = {
             "sound_on_critical": True,
             "min_notification_severity": "high",
             "live_monitor_autoscroll": True,
+            "browser_notifications": False,
         },
         "display": {
             "density": "comfortable",
@@ -84,6 +85,7 @@ USER_SETTINGS: dict[str, dict[str, Any]] = {
             "sound_on_critical": True,
             "min_notification_severity": "high",
             "live_monitor_autoscroll": True,
+            "browser_notifications": False,
         },
         "display": {
             "density": "comfortable",
@@ -180,7 +182,7 @@ async def require_admin(
 
 # --- Public & Authenticated Endpoints ---
 @router.post("/login", response_model=TokenResponse)
-async def login(req: LoginRequest, response: Response) -> TokenResponse:
+async def login(req: LoginRequest, request: Request, response: Response) -> TokenResponse:
     user = INITIAL_USERS.get(req.email.lower())
     if not user or not verify_password(req.password, user.password_hash):
         raise HTTPException(
@@ -200,13 +202,21 @@ async def login(req: LoginRequest, response: Response) -> TokenResponse:
     )
 
     # Set secure http-only refresh cookie
+    # Secure is true on HTTPS, in production, or on localhost (RFC 6265bis treated as secure context)
+    secure_cookie = (
+        request.url.scheme == "https"
+        or os.getenv("ENVIRONMENT") == "production"
+        or request.url.hostname in ("localhost", "127.0.0.1")
+        or os.getenv("COOKIE_SECURE", "false").lower() in ("true", "1")
+    )
     response.set_cookie(
         key="udtx_refresh_token",
         value=refresh_token,
         httponly=True,
         samesite="lax",
-        secure=False,  # Set to True in production with TLS
+        secure=secure_cookie,
         max_age=REFRESH_TOKEN_EXPIRE_DAYS * 86400,
+        path="/",
     )
 
     return TokenResponse(
@@ -225,14 +235,16 @@ async def login(req: LoginRequest, response: Response) -> TokenResponse:
 
 @router.post("/refresh", response_model=dict[str, str])
 async def refresh_access_token(
+    request: Request,
     refresh_token: Optional[str] = Query(None),
 ) -> dict[str, str]:
-    if not refresh_token:
+    token = request.cookies.get("udtx_refresh_token") or refresh_token
+    if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Refresh token required",
+            detail="Refresh token required in cookie or query",
         )
-    payload = decode_jwt_token(refresh_token)
+    payload = decode_jwt_token(token)
     if payload.get("type") != "refresh":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -255,7 +267,12 @@ async def refresh_access_token(
 
 @router.post("/logout")
 async def logout(response: Response) -> dict[str, str]:
-    response.delete_cookie("udtx_refresh_token")
+    response.delete_cookie(
+        key="udtx_refresh_token",
+        path="/",
+        httponly=True,
+        samesite="lax",
+    )
     return {"status": "logged_out"}
 
 

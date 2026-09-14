@@ -13,8 +13,8 @@ import { useLiveStore } from "../lib/store";
 import { deriveGraphFromTelemetry } from "../lib/api/graph";
 import { ListeningSphere } from "../components/ListeningSphere";
 import { Tooltip } from "../components/Tooltip";
-
 import { AnimatedNumber } from "../components/AnimatedNumber";
+import { OfflineStateBadge } from "../components/OfflineStateBadge";
 
 export const OverviewPage: React.FC = () => {
   const { metrics, alerts, incidents, isConnected } = useLiveStore();
@@ -36,6 +36,9 @@ export const OverviewPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Offline Fallback State Notice */}
+      <OfflineStateBadge variant="banner" />
+
       {/* Top Banner: Mission Control Status */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between pb-4 border-b border-[#3FC7D4]/15 gap-4">
         <div>

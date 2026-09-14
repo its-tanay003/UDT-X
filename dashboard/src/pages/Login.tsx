@@ -35,6 +35,7 @@ export const LoginPage: React.FC<LoginProps> = ({ onSuccess }) => {
       const res = await fetch(`${apiHost}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ email: email.trim(), password }),
       });
 

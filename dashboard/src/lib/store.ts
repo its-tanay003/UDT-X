@@ -11,9 +11,14 @@ interface LiveState {
   metrics: PerformanceMetrics | null;
   selectedAlertId: string | null;
   selectedIncidentId: string | null;
+  isOffline: boolean;
+  isOfflineFallback: boolean;
+  lastTelemetryTimestamp: number | null;
 
   // Actions
   setConnected: (connected: boolean) => void;
+  setIsOffline: (offline: boolean) => void;
+  setIsOfflineFallback: (fallback: boolean) => void;
   addAlert: (alert: Alert) => void;
   setAlerts: (alerts: Alert[]) => void;
   addIncident: (incident: Incident) => void;
@@ -35,8 +40,13 @@ export const useLiveStore = create<LiveState>((set, get) => ({
   metrics: null,
   selectedAlertId: null,
   selectedIncidentId: null,
+  isOffline: typeof navigator !== "undefined" ? !navigator.onLine : false,
+  isOfflineFallback: false,
+  lastTelemetryTimestamp: null,
 
   setConnected: (connected) => set({ isConnected: connected, isConnecting: false }),
+  setIsOffline: (offline) => set({ isOffline: offline }),
+  setIsOfflineFallback: (fallback) => set({ isOfflineFallback: fallback }),
 
   addAlert: (alert) =>
     set((state) => {
@@ -97,11 +107,25 @@ export const useLiveStore = create<LiveState>((set, get) => ({
         headers["Authorization"] = `Bearer ${token}`;
       }
 
+      let wasFromFallback = false;
+
       const [perfRes, alertsRes, incsRes] = await Promise.allSettled([
-        fetch(`${apiUrl}/performance`, { headers }).then((r) => (r.ok ? r.json() : null)),
-        fetch(`${apiUrl}/alerts?limit=15`, { headers }).then((r) => (r.ok ? r.json() : [])),
-        fetch(`${apiUrl}/incidents?limit=10`, { headers }).then((r) => (r.ok ? r.json() : [])),
+        fetch(`${apiUrl}/performance`, { headers, credentials: "include" }).then(async (r) => {
+          if (r.headers.get("x-udtx-fallback-cache") === "true") wasFromFallback = true;
+          return r.ok ? r.json() : null;
+        }),
+        fetch(`${apiUrl}/alerts?limit=15`, { headers, credentials: "include" }).then(async (r) => {
+          if (r.headers.get("x-udtx-fallback-cache") === "true") wasFromFallback = true;
+          return r.ok ? r.json() : [];
+        }),
+        fetch(`${apiUrl}/incidents?limit=10`, { headers, credentials: "include" }).then(async (r) => {
+          if (r.headers.get("x-udtx-fallback-cache") === "true") wasFromFallback = true;
+          return r.ok ? r.json() : [];
+        }),
       ]);
+
+      const offlineNow = typeof navigator !== "undefined" && !navigator.onLine;
+      const isFallback = wasFromFallback || offlineNow;
 
       if (perfRes.status === "fulfilled" && perfRes.value) {
         set({ metrics: perfRes.value });
@@ -112,10 +136,19 @@ export const useLiveStore = create<LiveState>((set, get) => ({
       if (incsRes.status === "fulfilled" && Array.isArray(incsRes.value)) {
         set({ incidents: incsRes.value });
       }
-      set({ hasLoadedInitial: true });
+      set({
+        hasLoadedInitial: true,
+        isOffline: offlineNow,
+        isOfflineFallback: isFallback,
+        lastTelemetryTimestamp: Date.now(),
+      });
     } catch (err) {
       console.debug("Initial REST telemetry fetch error:", err);
-      set({ hasLoadedInitial: true });
+      set({
+        hasLoadedInitial: true,
+        isOffline: true,
+        isOfflineFallback: true,
+      });
     }
   },
 
@@ -203,3 +236,13 @@ export const useLiveStore = create<LiveState>((set, get) => ({
     };
   },
 }));
+
+if (typeof window !== "undefined") {
+  window.addEventListener("online", () => {
+    useLiveStore.setState({ isOffline: false, isOfflineFallback: false });
+  });
+  window.addEventListener("offline", () => {
+    useLiveStore.setState({ isOffline: true, isOfflineFallback: true });
+  });
+}
+

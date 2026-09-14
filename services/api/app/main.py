@@ -11,6 +11,7 @@ from services.api.app.routers.auth import router as auth_router
 from services.api.app.routers.settings import router as settings_router
 from services.api.app.routers.soc import router as soc_router
 from services.api.app.routers.copilot import router as copilot_router
+from services.api.app.routers.privacy import router as privacy_router
 
 
 # Rate Limiting configuration (Redis / Memory backed)
@@ -54,6 +55,7 @@ app.include_router(auth_router)
 app.include_router(settings_router)
 app.include_router(soc_router)
 app.include_router(copilot_router)
+app.include_router(privacy_router)
 
 
 @app.get("/health")

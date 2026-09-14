@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { User, Shield, Key, UserCheck, AlertTriangle, CheckCircle, Plus } from "lucide-react";
+import { Link } from "react-router-dom";
+import { User, Shield, Key, UserCheck, AlertTriangle, CheckCircle, Plus, Lock } from "lucide-react";
 import { useAuthStore } from "../lib/auth";
 
 export const ProfilePage: React.FC = () => {
@@ -421,7 +422,17 @@ export const ProfilePage: React.FC = () => {
                         <span className="font-bold text-[#E7ECF5]">{u.display_name}</span>
                         <span className="text-[#8A95AA] ml-2 text-[10px]">({u.email})</span>
                       </div>
-                      <span className="text-[#3FC7D4] uppercase text-[10px] font-bold">
+                      <span
+                        className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider"
+                        style={{
+                          backgroundColor:
+                            u.role === "admin" ? "rgba(255,138,61,0.15)" : "rgba(63,199,212,0.15)",
+                          color: u.role === "admin" ? "#FF8A3D" : "#3FC7D4",
+                          border: `1px solid ${
+                            u.role === "admin" ? "rgba(255,138,61,0.4)" : "rgba(63,199,212,0.4)"
+                          }`,
+                        }}
+                      >
                         {u.role}
                       </span>
                     </div>
@@ -431,6 +442,25 @@ export const ProfilePage: React.FC = () => {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Privacy Center & Account Erasure Link */}
+      <div className="p-4 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 font-mono text-xs">
+        <div>
+          <div className="text-sm font-bold text-[#E7ECF5] flex items-center gap-2">
+            <Lock className="w-4 h-4 text-[#3FC7D4]" />
+            <span>DPDP Act Rights & Account Erasure</span>
+          </div>
+          <div className="text-[11px] text-[#8A95AA] mt-0.5">
+            Looking to exercise statutory access, nominate a contact, file a grievance, or submit an account deletion request under India's DPDP Act 2023?
+          </div>
+        </div>
+        <Link
+          to="/app/privacy-center"
+          className="px-3.5 py-1.5 rounded-lg bg-[#3FC7D4]/15 border border-[#3FC7D4]/30 text-[#3FC7D4] font-bold hover:bg-[#3FC7D4]/25 transition-colors whitespace-nowrap"
+        >
+          GO TO PRIVACY CENTER →
+        </Link>
       </div>
     </div>
   );

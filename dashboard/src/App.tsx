@@ -16,6 +16,7 @@ import {
   Shield,
   User,
   Zap,
+  Lock,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLiveStore } from "./lib/store";
@@ -24,6 +25,7 @@ import { Tooltip } from "./components/Tooltip";
 import { CookieConsentBanner } from "./components/CookieConsentBanner";
 import { SEO } from "./components/SEO";
 import { getApiBaseUrl, getWebSocketBaseUrl } from "./lib/apiConfig";
+import { registerServiceWorker, activateWaitingUpdate } from "./lib/pwa";
 
 // Public Pages
 import { LandingPage } from "./pages/Landing";
@@ -46,6 +48,7 @@ import { ReplayLabPage } from "./pages/ReplayLab";
 import { PerformancePage } from "./pages/Performance";
 import { ProfilePage } from "./pages/Profile";
 import { SettingsPage } from "./pages/Settings";
+import { PrivacyCenterPage } from "./pages/PrivacyCenter";
 
 // Enclave Onboarding & Modals
 import { BootSequence } from "./components/BootSequence";
@@ -187,6 +190,33 @@ const ConsoleRail: React.FC<ConsoleRailProps> = ({ isMobileOpen, setIsMobileOpen
             >
               <User className="w-3.5 h-3.5 shrink-0 mx-auto lg:mx-0" />
               <span className={`truncate ${!isMobileOpen ? "hidden lg:inline" : "inline"}`}>{user?.display_name || "Profile"}</span>
+              {user?.role && (
+                <span
+                  className={`ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded tracking-wider ${
+                    user.role === "admin"
+                      ? "bg-[#FF8A3D]/20 text-[#FF8A3D] border border-[#FF8A3D]/40"
+                      : "bg-[#3FC7D4]/15 text-[#3FC7D4] border border-[#3FC7D4]/30"
+                  } ${!isMobileOpen ? "hidden lg:inline-block" : "inline-block"}`}
+                >
+                  {user.role.toUpperCase()}
+                </span>
+              )}
+            </NavLink>
+          </Tooltip>
+
+          <Tooltip content="DPDP Act 2023 Enclave Privacy Center" position="right" className="w-full">
+            <NavLink
+              to="/app/privacy-center"
+              onClick={() => setIsMobileOpen(false)}
+              id="tour-nav-privacy-center"
+              className={({ isActive }) =>
+                `w-full flex items-center gap-2.5 px-2.5 lg:px-3 py-1.5 rounded-lg text-[11px] transition-colors ${
+                  isActive ? "bg-[#1B2540] text-[#3FC7D4] font-bold" : "text-[#8A95AA] hover:text-[#E7ECF5]"
+                }`
+              }
+            >
+              <Lock className="w-3.5 h-3.5 shrink-0 mx-auto lg:mx-0 text-[#3FC7D4]" />
+              <span className={`truncate ${!isMobileOpen ? "hidden lg:inline" : "inline"}`}>Privacy Center</span>
             </NavLink>
           </Tooltip>
 
@@ -245,7 +275,6 @@ const ConsoleRail: React.FC<ConsoleRailProps> = ({ isMobileOpen, setIsMobileOpen
   );
 };
 
-// Authenticated Enclave Dashboard Shell
 const AuthenticatedEnclave: React.FC = () => {
   const { user, isThrottled, throttleSeconds } = useAuthStore();
   const { connectWebSocket } = useLiveStore();
@@ -253,7 +282,12 @@ const AuthenticatedEnclave: React.FC = () => {
   const [showExperiencePrompt, setShowExperiencePrompt] = useState(false);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
+  const [swUpdateAvailable, setSwUpdateAvailable] = useState(false);
   const location = useLocation();
+
+  useEffect(() => {
+    registerServiceWorker(() => setSwUpdateAvailable(true));
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -340,6 +374,25 @@ const AuthenticatedEnclave: React.FC = () => {
         </div>
       )}
 
+      {/* Service Worker App Shell Update Toast Notification */}
+      {swUpdateAvailable && (
+        <div className="absolute top-4 right-4 z-50 p-4 rounded-xl bg-[#131B2E] border border-[#3FC7D4] shadow-[0_0_20px_rgba(63,199,212,0.25)] flex items-center gap-3 font-mono text-xs text-[#3FC7D4] animate-fade-in">
+          <RefreshCw className="w-5 h-5 animate-spin text-[#3FC7D4] shrink-0" />
+          <div>
+            <div className="font-bold text-[#E7ECF5]">STATION REVISION AVAILABLE</div>
+            <div className="text-[10px] text-[#8A95AA]">
+              A new app shell version is waiting to activate.
+            </div>
+          </div>
+          <button
+            onClick={() => activateWaitingUpdate()}
+            className="ml-2 px-3 py-1.5 rounded-lg bg-[#3FC7D4] text-[#0B1220] font-bold text-xs hover:bg-[#3FC7D4]/90 transition-colors shrink-0"
+          >
+            REFRESH NOW
+          </button>
+        </div>
+      )}
+
       {/* Mobile Top Navigation Bar (Hidden on md+) */}
       <div className="md:hidden w-full bg-[#0B1220] border-b border-[#3FC7D4]/15 px-4 py-3 flex items-center justify-between shrink-0 z-30">
         <div className="flex items-center gap-2.5">
@@ -395,6 +448,7 @@ const AuthenticatedEnclave: React.FC = () => {
               <Route path="/performance" element={<PerformancePage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/privacy-center" element={<PrivacyCenterPage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </motion.div>
@@ -436,6 +490,7 @@ export const App: React.FC = () => {
         <Route path="/performance" element={<Navigate to="/app/performance" replace />} />
         <Route path="/profile" element={<Navigate to="/app/profile" replace />} />
         <Route path="/settings" element={<Navigate to="/app/settings" replace />} />
+        <Route path="/privacy-center" element={<Navigate to="/app/privacy-center" replace />} />
 
         {/* Authenticated Dashboard Enclave Sub-tree */}
         <Route path="/app/*" element={<AuthenticatedEnclave />} />

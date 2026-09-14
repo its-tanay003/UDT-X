@@ -16,6 +16,7 @@ import {
 import { useLiveStore } from "../lib/store";
 import { EmptyState } from "../components/EmptyState";
 import { Tooltip } from "../components/Tooltip";
+import { OfflineStateBadge } from "../components/OfflineStateBadge";
 import type { Severity, ThreatClass } from "../types/soc";
 
 export const LiveMonitorPage: React.FC = () => {
@@ -41,6 +42,9 @@ export const LiveMonitorPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Offline Fallback State Notice */}
+      <OfflineStateBadge variant="banner" />
+
       {/* Top Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between pb-4 border-b border-[#3FC7D4]/15 gap-4">
         <div>

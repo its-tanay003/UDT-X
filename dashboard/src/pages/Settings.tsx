@@ -1,11 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { Settings, Bell, Monitor, Database, Shield, CheckCircle, Compass, RotateCcw } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Settings, Bell, Monitor, Database, Shield, CheckCircle, Compass, RotateCcw, Lock, ArrowRight } from "lucide-react";
 import { useAuthStore } from "../lib/auth";
 
 export const SettingsPage: React.FC = () => {
   const { user, settings, updateSettingsField, startTour } = useAuthStore();
   const [stationConfig, setStationConfig] = useState<any>(null);
   const [savedToast, setSavedToast] = useState(false);
+
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(() => {
+    return typeof window !== "undefined" && "Notification" in window
+      ? Notification.permission
+      : "default";
+  });
+  const [permMessage, setPermMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (user?.role === "admin") {
@@ -21,6 +29,47 @@ export const SettingsPage: React.FC = () => {
   const triggerSaveNotification = () => {
     setSavedToast(true);
     setTimeout(() => setSavedToast(false), 2000);
+  };
+
+  const handleNotificationToggle = async (enabled: boolean) => {
+    if (typeof window === "undefined" || !("Notification" in window)) {
+      setPermMessage("Desktop notifications are not supported in this browser environment.");
+      return;
+    }
+
+    if (!enabled) {
+      updateSettingsField("alerting", { browser_notifications: false });
+      triggerSaveNotification();
+      return;
+    }
+
+    // Request just-in-time on user click only
+    if (Notification.permission === "default") {
+      try {
+        const result = await Notification.requestPermission();
+        setNotificationPermission(result);
+        if (result === "granted") {
+          updateSettingsField("alerting", { browser_notifications: true });
+          triggerSaveNotification();
+          try {
+            new Notification("UDT-X Security Enclave", {
+              body: "Critical anomaly desktop alerts enabled for this station.",
+              icon: "/favicon.ico",
+            });
+          } catch (e) {}
+        } else {
+          updateSettingsField("alerting", { browser_notifications: false });
+          setPermMessage("Notification permission denied. Adjust site permissions in your browser URL bar.");
+        }
+      } catch (err) {
+        console.error("Notification permission error:", err);
+      }
+    } else if (Notification.permission === "granted") {
+      updateSettingsField("alerting", { browser_notifications: true });
+      triggerSaveNotification();
+    } else if (Notification.permission === "denied") {
+      setPermMessage("Browser notifications are blocked for this site. Click the padlock icon in your URL bar to allow notifications.");
+    }
   };
 
   return (
@@ -112,6 +161,42 @@ export const SettingsPage: React.FC = () => {
                 }}
                 className="w-4 h-4 accent-[#3FC7D4] cursor-pointer"
               />
+            </div>
+
+            {/* JIT Browser Notification Permission Toggle */}
+            <div className="p-3 rounded-lg bg-[#0B1220] border border-[#3FC7D4]/10 space-y-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-bold text-[#E7ECF5]">Desktop Browser Push Notifications</div>
+                  <div className="text-[10px] text-[#8A95AA]">
+                    Trigger OS desktop alerts on critical anomaly detection
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  id="browser-notification-toggle"
+                  name="browser_notifications"
+                  disabled={notificationPermission === "denied"}
+                  checked={Boolean(settings.alerting.browser_notifications && notificationPermission === "granted")}
+                  onChange={(e) => handleNotificationToggle(e.target.checked)}
+                  className="w-4 h-4 accent-[#3FC7D4] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                />
+              </div>
+
+              {notificationPermission === "denied" && (
+                <div className="p-2.5 rounded bg-[#FF4757]/10 border border-[#FF4757]/30 text-[11px] text-[#FF4757] flex flex-col gap-1">
+                  <span className="font-bold">Notifications Blocked in Browser</span>
+                  <span className="text-[#8A95AA]">
+                    Browser notifications are currently blocked for this origin. To enable, click the site settings padlock in your browser's address bar and set Notifications to "Allow".
+                  </span>
+                </div>
+              )}
+
+              {permMessage && notificationPermission !== "denied" && (
+                <div className="p-2 rounded bg-[#FF8A3D]/10 border border-[#FF8A3D]/30 text-[11px] text-[#FF8A3D]">
+                  {permMessage}
+                </div>
+              )}
             </div>
 
             <div className="p-3 rounded-lg bg-[#0B1220] border border-[#3FC7D4]/10 space-y-2">
@@ -239,6 +324,29 @@ export const SettingsPage: React.FC = () => {
             </div>
           </div>
         )}
+      </div>
+
+      {/* DPDP Act Privacy Center Banner */}
+      <div className="p-5 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 font-mono">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 text-xs font-bold text-[#3FC7D4] uppercase tracking-wider">
+            <Lock className="w-4 h-4 text-[#3FC7D4]" />
+            <span>Digital Personal Data Protection (DPDP) Act 2023</span>
+          </div>
+          <div className="text-sm font-display font-bold text-[#E7ECF5]">
+            Station Privacy Center & Data Principal Rights Console
+          </div>
+          <p className="text-xs text-[#8A95AA]">
+            Exercise your statutory rights under DPDP Act Sections 11–14: Download personal data, request account erasure with statutory disclosures, file tracked grievances with published SLA, and designate trusted nominees.
+          </p>
+        </div>
+        <Link
+          to="/app/privacy-center"
+          className="px-4 py-2 rounded-lg bg-[#3FC7D4]/15 border border-[#3FC7D4]/40 hover:bg-[#3FC7D4]/25 text-[#3FC7D4] text-xs font-bold transition-colors whitespace-nowrap flex items-center gap-2 shrink-0"
+        >
+          <span>OPEN PRIVACY CENTER</span>
+          <ArrowRight className="w-4 h-4" />
+        </Link>
       </div>
     </div>
   );

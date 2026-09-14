@@ -18,6 +18,7 @@ export interface UserSettings {
     sound_on_critical: boolean;
     min_notification_severity: "low" | "medium" | "high" | "critical";
     live_monitor_autoscroll: boolean;
+    browser_notifications: boolean;
   };
   display: {
     density: "comfortable" | "compact";
@@ -57,6 +58,7 @@ interface AuthState {
   prevTourStep: () => void;
   skipTour: () => Promise<void>;
   completeTour: () => Promise<void>;
+  restoreSession: () => Promise<boolean>;
 }
 
 const DEFAULT_SETTINGS: UserSettings = {
@@ -64,6 +66,7 @@ const DEFAULT_SETTINGS: UserSettings = {
     sound_on_critical: true,
     min_notification_severity: "high",
     live_monitor_autoscroll: true,
+    browser_notifications: false,
   },
   display: {
     density: "comfortable",
@@ -97,10 +100,32 @@ export const useAuthStore = create<AuthState>()(
 
       setToken: (token) => set({ accessToken: token }),
 
+      restoreSession: async () => {
+        try {
+          const api = getApiBaseUrl();
+          const res = await fetch(`${api}/auth/refresh`, {
+            method: "POST",
+            credentials: "include",
+          });
+          if (res.ok) {
+            const data = await res.json();
+            set({ accessToken: data.access_token });
+            get().fetchSettings();
+            return true;
+          }
+        } catch (e) {
+          console.debug("Session restore via refresh cookie skipped/failed:", e);
+        }
+        return false;
+      },
+
       logout: async () => {
         try {
           const api = getApiBaseUrl();
-          await fetch(`${api}/auth/logout`, { method: "POST" });
+          await fetch(`${api}/auth/logout`, {
+            method: "POST",
+            credentials: "include",
+          });
         } catch (e) {
           console.debug("Logout cleanup error:", e);
         }
@@ -114,120 +139,124 @@ export const useAuthStore = create<AuthState>()(
 
       setSettings: (settings) => set({ settings }),
 
-  updateSettingsField: (category, fields) => {
-    const updated = {
-      ...get().settings,
-      [category]: { ...get().settings[category], ...fields },
-    };
-    set({ settings: updated });
-    get().saveSettings(updated);
-  },
+      updateSettingsField: (category, fields) => {
+        const updated = {
+          ...get().settings,
+          [category]: { ...get().settings[category], ...fields },
+        };
+        set({ settings: updated });
+        get().saveSettings(updated);
+      },
 
-  fetchSettings: async () => {
-    const token = get().accessToken;
-    if (!token) return;
-    try {
-      const api = getApiBaseUrl();
-      const res = await fetch(`${api}/settings`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        set({ settings: data });
-      }
-    } catch (err) {
-      console.debug("Failed to fetch settings from server:", err);
+      fetchSettings: async () => {
+        const token = get().accessToken;
+        if (!token) return;
+        try {
+          const api = getApiBaseUrl();
+          const res = await fetch(`${api}/settings`, {
+            headers: { Authorization: `Bearer ${token}` },
+            credentials: "include",
+          });
+          if (res.ok) {
+            const data = await res.json();
+            set({ settings: data });
+          }
+        } catch (err) {
+          console.debug("Failed to fetch settings from server:", err);
+        }
+      },
+
+      saveSettings: async (newSettings: UserSettings) => {
+        const token = get().accessToken;
+        if (!token) return;
+        try {
+          const api = getApiBaseUrl();
+          await fetch(`${api}/settings`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            credentials: "include",
+            body: JSON.stringify(newSettings),
+          });
+        } catch (err) {
+          console.debug("Failed to save settings:", err);
+        }
+      },
+
+      setThrottled: (seconds: number) => {
+        set({ isThrottled: true, throttleSeconds: seconds });
+        const interval = setInterval(() => {
+          const current = get().throttleSeconds;
+          if (current <= 1) {
+            clearInterval(interval);
+            set({ isThrottled: false, throttleSeconds: 0 });
+          } else {
+            set({ throttleSeconds: current - 1 });
+          }
+        }, 1000);
+      },
+
+      startTour: () => set({ tourActive: true, tourStepIndex: 0 }),
+      nextTourStep: () => set((state) => ({ tourStepIndex: state.tourStepIndex + 1 })),
+      prevTourStep: () =>
+        set((state) => ({ tourStepIndex: Math.max(0, state.tourStepIndex - 1) })),
+
+      skipTour: async () => {
+        set({ tourActive: false });
+        const token = get().accessToken;
+        if (token) {
+          try {
+            const api = getApiBaseUrl();
+            await fetch(`${api}/auth/me`, {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              credentials: "include",
+              body: JSON.stringify({ has_completed_tour: true }),
+            });
+            get().updateUser({ has_completed_tour: true });
+          } catch (err) {
+            console.debug("Error skipping tour:", err);
+          }
+        }
+      },
+
+      completeTour: async () => {
+        set({ tourActive: false });
+        const token = get().accessToken;
+        if (token) {
+          try {
+            const api = getApiBaseUrl();
+            await fetch(`${api}/auth/me`, {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              credentials: "include",
+              body: JSON.stringify({ has_completed_tour: true }),
+            });
+            get().updateUser({ has_completed_tour: true });
+          } catch (err) {
+            console.debug("Error completing tour:", err);
+          }
+        }
+      },
+    }),
+    {
+      name: "udtx_auth_store",
+      storage: createJSONStorage(() => localStorage),
+      // Strictly memory-only for accessToken to defend against XSS storage theft
+      partialize: (state) => ({
+        user: state.user,
+        settings: state.settings,
+      }),
     }
-  },
-
-  saveSettings: async (newSettings) => {
-    const token = get().accessToken;
-    if (!token) return;
-    try {
-      const api = getApiBaseUrl();
-      await fetch(`${api}/settings`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(newSettings),
-      });
-    } catch (err) {
-      console.debug("Failed to persist settings:", err);
-    }
-  },
-
-  setThrottled: (seconds) => {
-    set({ isThrottled: true, throttleSeconds: seconds });
-    const timer = setInterval(() => {
-      const remaining = get().throttleSeconds - 1;
-      if (remaining <= 0) {
-        clearInterval(timer);
-        set({ isThrottled: false, throttleSeconds: 0 });
-      } else {
-        set({ throttleSeconds: remaining });
-      }
-    }, 1000);
-  },
-
-  startTour: () => set({ tourActive: true, tourStepIndex: 0 }),
-  nextTourStep: () => set((state) => ({ tourStepIndex: state.tourStepIndex + 1 })),
-  prevTourStep: () =>
-    set((state) => ({ tourStepIndex: Math.max(0, state.tourStepIndex - 1) })),
-
-  skipTour: async () => {
-    set({ tourActive: false });
-    const token = get().accessToken;
-    if (token) {
-      try {
-        const api = getApiBaseUrl();
-        await fetch(`${api}/auth/me`, {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ has_completed_tour: true }),
-        });
-        get().updateUser({ has_completed_tour: true });
-      } catch (err) {
-        console.debug("Error skipping tour:", err);
-      }
-    }
-  },
-
-  completeTour: async () => {
-    set({ tourActive: false });
-    const token = get().accessToken;
-    if (token) {
-      try {
-        const api = getApiBaseUrl();
-        await fetch(`${api}/auth/me`, {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ has_completed_tour: true }),
-        });
-        get().updateUser({ has_completed_tour: true });
-      } catch (err) {
-        console.debug("Error completing tour:", err);
-      }
-    }
-  },
-}),
-{
-  name: "udtx_auth_store",
-  storage: createJSONStorage(() => localStorage),
-  partialize: (state) => ({
-    user: state.user,
-    accessToken: state.accessToken,
-    settings: state.settings,
-  }),
-}
-)
+  )
 );
 
 /**
@@ -235,14 +264,20 @@ export const useAuthStore = create<AuthState>()(
  */
 export async function apiFetch(url: string, options: RequestInit = {}): Promise<Response> {
   const authStore = useAuthStore.getState();
-  const token = authStore.accessToken;
+  let token = authStore.accessToken;
+
+  // Restore in-memory token from HttpOnly cookie if session exists but token missing
+  if (!token && authStore.user) {
+    await authStore.restoreSession();
+    token = useAuthStore.getState().accessToken;
+  }
 
   const headers = new Headers(options.headers || {});
   if (token) {
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  let response = await fetch(url, { ...options, headers });
+  let response = await fetch(url, { ...options, headers, credentials: "include" });
 
   // Handle 429 Rate Limiting
   if (response.status === 429) {
@@ -251,18 +286,19 @@ export async function apiFetch(url: string, options: RequestInit = {}): Promise<
     return response;
   }
 
-  // Handle 401 Unauthorized token refresh
+  // Handle 401 Unauthorized token refresh via secure cookie
   if (response.status === 401) {
     try {
       const api = getApiBaseUrl();
       const refreshRes = await fetch(`${api}/auth/refresh`, {
         method: "POST",
+        credentials: "include",
       });
       if (refreshRes.ok) {
         const refreshData = await refreshRes.json();
         authStore.setToken(refreshData.access_token);
         headers.set("Authorization", `Bearer ${refreshData.access_token}`);
-        response = await fetch(url, { ...options, headers });
+        response = await fetch(url, { ...options, headers, credentials: "include" });
       } else {
         authStore.logout();
       }

@@ -19,6 +19,7 @@ import {
 } from "recharts";
 import { useLiveStore } from "../lib/store";
 import { Tooltip } from "../components/Tooltip";
+import { OfflineStateBadge } from "../components/OfflineStateBadge";
 
 interface PerformancePageProps {
   onBack?: () => void;
@@ -58,17 +59,20 @@ export const PerformancePage: React.FC<PerformancePageProps> = ({ onBack }) => {
             p99_latency_ms: (metrics?.p99_latency_ms ?? 4.18) + (Math.random() - 0.5) * 0.2,
             median_latency_ms: (metrics?.median_latency_ms ?? 1.12) + (Math.random() - 0.5) * 0.05,
             cpu_usage: (metrics?.cpu_usage_pct ?? 18.2) + (Math.random() - 0.5) * 0.8,
-            memory_mb: (metrics?.memory_usage_mb ?? 412) + Math.floor((Math.random() - 0.5) * 4),
+            memory_mb: (metrics?.memory_usage_mb ?? 412) + Math.floor((Math.random() - 0.5) * 5),
           },
         ];
         return next;
       });
-    }, 2000);
+    }, 3000);
     return () => clearInterval(timer);
   }, [metrics]);
 
   return (
     <div className="space-y-6">
+      {/* Offline Fallback State Notice */}
+      <OfflineStateBadge variant="banner" />
+
       {/* Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between pb-4 border-b border-[#3FC7D4]/15 gap-4">
         <div className="flex items-center gap-4">

@@ -36,15 +36,30 @@ async def run_extreme_suite():
         except Exception as e:
             record("Auth: Reject Invalid Creds", False, str(e))
 
-        # Test 2.2: Admin login
+        # Test 2.2: Admin login & Cookie Inspection
         admin_token = None
+        refresh_cookie = None
         try:
             r = await client.post("/auth/login", json={"email": "admin@udtx.local", "password": "AdminEnclave2026!"})
             data = r.json()
             admin_token = data.get("access_token")
+            # Inspect Set-Cookie header
+            set_cookie = r.headers.get("set-cookie", "")
+            has_cookie = "udtx_refresh_token=" in set_cookie
+            has_httponly = "httponly" in set_cookie.lower()
+            has_samesite = "samesite=lax" in set_cookie.lower()
+            has_path = "path=/" in set_cookie.lower()
+            refresh_cookie = r.cookies.get("udtx_refresh_token")
+
             record("Auth: Admin Login", r.status_code == 200 and bool(admin_token), f"Role: {data.get('user', {}).get('role')}")
+            record(
+                "Cookies: Refresh Token Attributes (HttpOnly, SameSite=Lax, Path=/)",
+                has_cookie and has_httponly and has_samesite and has_path,
+                f"Cookie: {set_cookie[:80]}...",
+            )
         except Exception as e:
             record("Auth: Admin Login", False, str(e))
+            record("Cookies: Refresh Token Attributes", False, str(e))
 
         # Test 2.3: Analyst login
         analyst_token = None
@@ -55,6 +70,134 @@ async def run_extreme_suite():
             record("Auth: Analyst Login", r.status_code == 200 and bool(analyst_token), f"Role: {data.get('user', {}).get('role')}")
         except Exception as e:
             record("Auth: Analyst Login", False, str(e))
+
+        # Test 2.4: Token refresh via HttpOnly cookie
+        try:
+            if refresh_cookie:
+                r = await client.post("/auth/refresh", cookies={"udtx_refresh_token": refresh_cookie})
+                ref_data = r.json()
+                record(
+                    "Auth: Cookie-Based Token Refresh",
+                    r.status_code == 200 and "access_token" in ref_data,
+                    f"New token received: {bool(ref_data.get('access_token'))}",
+                )
+            else:
+                record("Auth: Cookie-Based Token Refresh", False, "No refresh cookie from login")
+        except Exception as e:
+            record("Auth: Cookie-Based Token Refresh", False, str(e))
+
+        # Test 2.5: Backend Admin Role Enforcement (Analyst hitting admin-only routes -> 403)
+        try:
+            r_users = await client.get("/auth/users", headers={"Authorization": f"Bearer {analyst_token}"})
+            r_config = await client.get("/settings/station-config", headers={"Authorization": f"Bearer {analyst_token}"})
+            analyst_blocked = r_users.status_code == 403 and r_config.status_code == 403
+            record(
+                "Permissions: Analyst Role Backend 403 Enforcement (/auth/users & /settings/station-config)",
+                analyst_blocked,
+                f"/auth/users: {r_users.status_code}, /settings/station-config: {r_config.status_code}",
+            )
+        except Exception as e:
+            record("Permissions: Analyst Role Backend 403 Enforcement", False, str(e))
+
+        # Test 2.6: Admin accessing admin-only routes -> 200
+        try:
+            r_users = await client.get("/auth/users", headers={"Authorization": f"Bearer {admin_token}"})
+            r_config = await client.get("/settings/station-config", headers={"Authorization": f"Bearer {admin_token}"})
+            admin_allowed = r_users.status_code == 200 and r_config.status_code == 200
+            record(
+                "Permissions: Admin Permitted on Protected Management Routes",
+                admin_allowed,
+                f"Users count: {len(r_users.json()) if r_users.status_code == 200 else 'ERR'}",
+            )
+        except Exception as e:
+            record("Permissions: Admin Permitted on Protected Management Routes", False, str(e))
+
+        print("\n==================== 2.7 DPDP ACT 2023 PRIVACY CENTER APIS ====================")
+        # Test 2.7.1: S.11 Data Export
+        try:
+            r_exp = await client.get("/privacy/export", headers={"Authorization": f"Bearer {admin_token}"})
+            exp_data = r_exp.json()
+            has_meta = "export_metadata" in exp_data and "legal_retention_disclosure" in exp_data
+            record(
+                "DPDP S.11: Data Portability Export (/privacy/export)",
+                r_exp.status_code == 200 and has_meta,
+                f"Statutory Basis: {exp_data.get('export_metadata', {}).get('statutory_basis')}",
+            )
+        except Exception as e:
+            record("DPDP S.11: Data Portability Export", False, str(e))
+
+        # Test 2.7.2: S.14 Right to Nominate
+        try:
+            r_nom = await client.post(
+                "/privacy/nominee",
+                json={
+                    "full_name": "Test Nominee Representative",
+                    "contact": "+91-99887-76655",
+                    "relationship": "Designated Emergency Keyholder",
+                },
+                headers={"Authorization": f"Bearer {analyst_token}"},
+            )
+            nom_data = r_nom.json()
+            record(
+                "DPDP S.14: Nominee Appointment (/privacy/nominee)",
+                r_nom.status_code == 200 and nom_data.get("status") == "saved",
+                f"Nominee: {nom_data.get('nominee', {}).get('full_name')}",
+            )
+        except Exception as e:
+            record("DPDP S.14: Nominee Appointment", False, str(e))
+
+        # Test 2.7.3: S.13 Right to Grievance Redressal
+        try:
+            r_grv = await client.post(
+                "/privacy/grievances",
+                json={
+                    "subject": "Testing statutory SLA timeline on telemetry inquiry",
+                    "body": "Formal verification of 48h acknowledgment and 7 calendar day resolution target.",
+                },
+                headers={"Authorization": f"Bearer {analyst_token}"},
+            )
+            grv_data = r_grv.json()
+            has_sla = "ack_target_at" in grv_data.get("grievance", {}) and "resolution_target_at" in grv_data.get("grievance", {})
+            record(
+                "DPDP S.13: Grievance Submission with Published SLA Timelines",
+                r_grv.status_code == 201 and has_sla,
+                f"Ticket: {grv_data.get('grievance', {}).get('id')}, Ack SLA: {grv_data.get('grievance', {}).get('ack_target_at')}",
+            )
+        except Exception as e:
+            record("DPDP S.13: Grievance Submission", False, str(e))
+
+        # Test 2.7.4: S.12 Account Erasure Scheduling with Carveout Disclosures
+        try:
+            r_del = await client.post(
+                "/privacy/request-erasure",
+                json={
+                    "password": "AnalystEnclave2026!",
+                    "confirmation_phrase": "PERMANENTLY DELETE",
+                },
+                headers={"Authorization": f"Bearer {analyst_token}"},
+            )
+            del_data = r_del.json()
+            has_itemized = "itemized_actions" in del_data.get("details", {})
+            record(
+                "DPDP S.12: Account Erasure Request with CERT-In Carveout",
+                r_del.status_code == 200 and has_itemized,
+                f"Cooloff Status: {del_data.get('details', {}).get('status')}",
+            )
+        except Exception as e:
+            record("DPDP S.12: Account Erasure Request", False, str(e))
+
+        # Test 2.7.5: Data Retention Purge Job (Admin only, 403 on analyst)
+        try:
+            r_purge_bad = await client.post("/privacy/purge-expired", headers={"Authorization": f"Bearer {analyst_token}"})
+            r_purge_ok = await client.post("/privacy/purge-expired", headers={"Authorization": f"Bearer {admin_token}"})
+            purge_data = r_purge_ok.json()
+            record(
+                "Retention: Automated 180-Day Data Retention Purge Job",
+                r_purge_bad.status_code == 403 and r_purge_ok.status_code == 200,
+                f"Analyst: {r_purge_bad.status_code}, Admin Purge Cert: {purge_data.get('audit_certificate')}",
+            )
+        except Exception as e:
+            record("Retention: Automated 180-Day Data Retention Purge Job", False, str(e))
 
         print("\n==================== 3. PROTECTED TELEMETRY & ATTACK SIMULATION ====================")
         headers_admin = {"Authorization": f"Bearer {admin_token}"} if admin_token else {}
@@ -170,12 +313,20 @@ async def run_extreme_suite():
             record("WebSocket: Reject Forged JWT Token", True, f"Error: {e}")
 
     print("\n==================== 6. FRONTEND DEV SERVER ACCESSIBILITY ====================")
-    async with httpx.AsyncClient(base_url="http://127.0.0.1:3001", timeout=10.0) as fe_client:
+    fe_urls = ["http://localhost:3001", "http://127.0.0.1:3001", "http://localhost:3000"]
+    fe_passed = False
+    fe_status = ""
+    for url in fe_urls:
         try:
-            r = await fe_client.get("/")
-            record("Frontend: Index HTML Serving", r.status_code == 200 and "<div id=\"root\">" in r.text, f"Status: {r.status_code}")
-        except Exception as e:
-            record("Frontend: Index HTML Serving", False, str(e))
+            async with httpx.AsyncClient(base_url=url, timeout=5.0) as fe_client:
+                r = await fe_client.get("/")
+                if r.status_code == 200 and '<div id="root">' in r.text:
+                    fe_passed = True
+                    fe_status = f"{url} (Status: {r.status_code})"
+                    break
+        except Exception:
+            continue
+    record("Frontend: Index HTML Serving", fe_passed, fe_status or "Failed connecting to frontend")
 
     print("\n==================== SUMMARY ====================")
     print(f"Total Checks Run: {results['passed'] + results['failed']}")

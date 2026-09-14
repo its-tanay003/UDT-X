@@ -168,35 +168,109 @@ export const PrivacyPage: React.FC = () => {
 
         {/* Section 5: Rights of Data Principals */}
         <section className="space-y-4">
-          <h2 className="text-xl font-display font-bold text-[#E7ECF5] flex items-center gap-2.5">
-            <div className="w-2 h-2 rounded-full bg-[#3FC7D4]" />
-            5. Rights of the Data Principal (Under DPDP Act 2023)
-          </h2>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <h2 className="text-xl font-display font-bold text-[#E7ECF5] flex items-center gap-2.5">
+              <div className="w-2 h-2 rounded-full bg-[#3FC7D4]" />
+              5. Rights of the Data Principal (Under DPDP Act 2023)
+            </h2>
+            <Link
+              to="/app/privacy-center"
+              className="px-3.5 py-1.5 rounded-lg bg-[#3FC7D4]/15 border border-[#3FC7D4]/40 hover:bg-[#3FC7D4]/25 text-[#3FC7D4] font-mono text-xs font-bold transition-all flex items-center gap-1.5"
+            >
+              <span>EXERCISE IN PRIVACY CENTER</span>
+              <Lock className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          <p className="text-sm text-[#8A95AA] leading-relaxed">
+            Unlike traditional static disclosures, UDT-X provides an authenticated <strong className="text-[#E7ECF5]">Privacy Center Console</strong> where you can directly execute each of your enforceable statutory rights under Sections 11–14:
+          </p>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-mono">
             <div className="p-4 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/15 space-y-1.5">
-              <span className="text-[#3FC7D4] font-bold block">RIGHT TO ACCESS & SUMMARY</span>
+              <span className="text-[#3FC7D4] font-bold block">SECTION 11: RIGHT TO ACCESS</span>
               <p className="text-[#8A95AA]">
-                Operators may view all stored profile information directly in the Profile settings console at any time.
+                Download a machine-readable JSON dossier of all account data, settings, session history, and audit log disclosures.
               </p>
             </div>
             <div className="p-4 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/15 space-y-1.5">
-              <span className="text-[#3FC7D4] font-bold block">RIGHT TO CORRECTION & ERASURE</span>
+              <span className="text-[#3FC7D4] font-bold block">SECTION 12: CORRECTION & ERASURE</span>
               <p className="text-[#8A95AA]">
-                Operators can update call-signs and passwords in real-time or request full account erasure via the DPO desk.
+                Update identity credentials or submit a formal account erasure request (with CERT-In 180-day retention disclosures).
               </p>
             </div>
             <div className="p-4 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/15 space-y-1.5">
-              <span className="text-[#3FC7D4] font-bold block">RIGHT TO GRIEVANCE REDRESSAL</span>
+              <span className="text-[#3FC7D4] font-bold block">SECTION 13: GRIEVANCE REDRESSAL</span>
               <p className="text-[#8A95AA]">
-                Submit formal grievances to our appointed DPO with guaranteed response and resolution within 7 working days.
+                Submit tracked grievances with published SLA timelines: 48-hour mandatory acknowledgment and 7-day resolution.
               </p>
             </div>
             <div className="p-4 rounded-xl bg-[#131B2E] border border-[#3FC7D4]/15 space-y-1.5">
-              <span className="text-[#3FC7D4] font-bold block">RIGHT TO NOMINATE</span>
+              <span className="text-[#3FC7D4] font-bold block">SECTION 14: RIGHT TO NOMINATE</span>
               <p className="text-[#8A95AA]">
-                Designate a proxy representative in the event of incapacity or death through formal enterprise administrative channels.
+                Appoint a trusted representative or kin authorized to exercise your data rights in the event of incapacity or death.
               </p>
             </div>
+          </div>
+        </section>
+
+        {/* Section 6: Specific Cryptographic Cookie & Storage Inventory */}
+        <section className="space-y-4">
+          <h2 className="text-xl font-display font-bold text-[#E7ECF5] flex items-center gap-2.5">
+            <div className="w-2 h-2 rounded-full bg-[#3FC7D4]" />
+            6. Specific Cookie & Client Storage Inventory
+          </h2>
+          <p className="text-sm text-[#8A95AA] leading-relaxed">
+            In compliance with DPDP principles of transparency, the table below inventories all client-side cookies and persistent storage tokens utilized by the UDT-X platform:
+          </p>
+
+          <div className="overflow-x-auto rounded-xl border border-[#3FC7D4]/20 bg-[#131B2E]">
+            <table className="w-full text-left text-xs font-mono">
+              <thead className="bg-[#0B1220] text-[#3FC7D4] border-b border-[#3FC7D4]/20 text-[10px]">
+                <tr>
+                  <th className="p-3">IDENTIFIER</th>
+                  <th className="p-3">CATEGORY</th>
+                  <th className="p-3">PURPOSE & ENCLAVE FUNCTION</th>
+                  <th className="p-3">ATTRIBUTES</th>
+                  <th className="p-3">EXPIRY</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#3FC7D4]/10 text-[#8A95AA]">
+                <tr>
+                  <td className="p-3 font-bold text-[#3FC7D4]">udtx_refresh_token</td>
+                  <td className="p-3">
+                    <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-[#3FC7D4]/15 text-[#3FC7D4] border border-[#3FC7D4]/30">
+                      Strictly Necessary
+                    </span>
+                  </td>
+                  <td className="p-3 text-[#E7ECF5]">Carries encrypted JWT refresh session token for silent session renewal. Unreadable by JavaScript.</td>
+                  <td className="p-3 text-[11px]">HttpOnly, Secure, SameSite=Lax, Path=/</td>
+                  <td className="p-3">7 Days</td>
+                </tr>
+                <tr>
+                  <td className="p-3 font-bold text-[#3FC7D4]">udtx_auth_store</td>
+                  <td className="p-3">
+                    <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-[#3FC7D4]/15 text-[#3FC7D4] border border-[#3FC7D4]/30">
+                      Strictly Necessary
+                    </span>
+                  </td>
+                  <td className="p-3 text-[#E7ECF5]">Stores operator identity metadata and UI alerting settings. JWT access token is memory-only.</td>
+                  <td className="p-3 text-[11px]">Browser LocalStorage</td>
+                  <td className="p-3">Persistent</td>
+                </tr>
+                <tr>
+                  <td className="p-3 font-bold text-[#3FC7D4]">udtx_analytics_consent</td>
+                  <td className="p-3">
+                    <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-[#4CAF7D]/15 text-[#4CAF7D] border border-[#4CAF7D]/30">
+                      Functional / Consent
+                    </span>
+                  </td>
+                  <td className="p-3 text-[#E7ECF5]">Records consent choice from compliance banner. Telemetry is never emitted before opt-in.</td>
+                  <td className="p-3 text-[11px]">Browser LocalStorage</td>
+                  <td className="p-3">1 Year</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </section>
 
